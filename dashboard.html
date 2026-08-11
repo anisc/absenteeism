@@ -1228,31 +1228,28 @@
     <div class="chart-card">
       <div class="chart-title">Bradford Factor Intensity by Station & Month</div>
       <div class="chart-desc">
-        Bradford Formula: <strong>S² × D</strong> (S = spells/events, D = total days absent per base).
-        Darker red = higher operational risk. Click a cell for details.
+        Bradford Formula: <strong>S² × D</strong> (S = absence spells, D = days absent) summed across crew per base & month.
+        Darker red = higher operational risk. Hover a cell for details.
       </div>
       <div class="bradford-scale">
         <span style="font-size:11px;color:var(--muted);font-weight:600;">Scale:</span>
         <div class="bs-item">
-          <div class="bs-box" style="background:#1a3a2a"></div>&lt; 1K
+          <div class="bs-box" style="background:#1a3a2a"></div>&lt; 2K
         </div>
         <div class="bs-item">
-          <div class="bs-box" style="background:#2d5a3a"></div>1K–5K
+          <div class="bs-box" style="background:#2d5a3a"></div>2K–5K
         </div>
         <div class="bs-item">
-          <div class="bs-box" style="background:#5a8a2a"></div>5K–15K
+          <div class="bs-box" style="background:#5a8a2a"></div>5K–8K
         </div>
         <div class="bs-item">
-          <div class="bs-box" style="background:#a8b820"></div>15K–30K
+          <div class="bs-box" style="background:#a8b820"></div>8K–11K
         </div>
         <div class="bs-item">
-          <div class="bs-box" style="background:#d4891a"></div>30K–60K
+          <div class="bs-box" style="background:#d4891a"></div>11K–14K
         </div>
         <div class="bs-item">
-          <div class="bs-box" style="background:#c84020"></div>60K–100K
-        </div>
-        <div class="bs-item">
-          <div class="bs-box" style="background:#a01010"></div>&gt; 100K
+          <div class="bs-box" style="background:#c84020"></div>&gt; 14K
         </div>
       </div>
       <div class="heatmap-container" id="heatmapContainer"></div>
@@ -1878,24 +1875,15 @@
     // ============================================================
     function renderHeatmap() {
       const container = document.getElementById('heatmapContainer');
-      const bases = ['YYZ', 'YYC', 'YVR', 'YEG', 'YWG', 'YUL'];
-      const baseLabels = { YYZ: 'YYZ Toronto', YYC: 'YYC Calgary', YVR: 'YVR Vancouver', YEG: 'YEG Edmonton', YWG: 'YWG Winnipeg', YUL: 'YUL Montréal' };
+      const bases = ['YYZ', 'YYC', 'YVR', 'YEG', 'YWG', 'YUL', 'YHZ', 'YQB'];
+      const baseLabels = { YYZ: 'YYZ Toronto', YYC: 'YYC Calgary', YVR: 'YVR Vancouver', YEG: 'YEG Edmonton', YWG: 'YWG Winnipeg', YUL: 'YUL Montréal', YHZ: 'YHZ Halifax', YQB: 'YQB Québec' };
 
-      // Compute Bradford per base per month from employees
-      // Bradford = S^2 * D where S = events, D = total days
-      // Use ALL_DATA.monthly_by_base for event counts
-      const src = ALL_DATA.monthly_by_base;
+      // Real Bradford per base per month (S^2 * D), computed from the Excel
+      // at employee level and summed per base + month. Pre-computed in the JSON.
+      const src = ALL_DATA.bradford_by_base_month;
 
-      // Bradford = events^2 * events (since each row = 1 event = 1 day approximately)
-      // More precisely: per base per month: S = count of absence events, D = count of days
-      // Since no duration info, treat S = D = count of events
-      // Bradford = S^2 * D = n^3? No — standard: S = spells, D = total days lost
-      // Use: S = events_per_month, D = events_per_month (1 day each)
-      // Bradford = S^2 * D
       function getBradford(base, month) {
-        const n = src[base]?.[month] || 0;
-        if (n === 0) return 0;
-        return n * n * n; // S=n, D=n approximation
+        return src?.[base]?.[month] || 0;
       }
 
       // Find global max for scaling
@@ -1929,13 +1917,13 @@
         MONTH_KEYS.forEach((mk, mi) => {
           const val = getBradford(base, mk);
           const color = bradfordColor(val, gMax);
-          const events = src[base]?.[mk] || 0;
+          const events = ALL_DATA.monthly_by_base?.[mk]?.[base] || 0;
           const brad = val.toLocaleString();
           html += `<div class="heatmap-cell" 
         style="background:${color};" 
         onmouseenter="showTooltip(event,'${base} · ${MONTHS[mi]}','Events: ${events}','Bradford: ${brad}')"
         onmouseleave="hideTooltip()">
-        <span style="color:rgba(255,255,255,0.7);text-shadow:0 1px 2px rgba(0,0,0,0.8)">${events > 0 ? events : ''}</span>
+        <span style="color:rgba(255,255,255,0.7);text-shadow:0 1px 2px rgba(0,0,0,0.8)">${val > 0 ? val.toLocaleString() : ''}</span>
       </div>`;
         });
       });
