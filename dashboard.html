@@ -1,0 +1,3871 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew Absenteeism Executive Dashboard — POC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    :root {
+      --bg-deep: #070b14;
+      --bg-card: #0d1424;
+      --bg-card2: #111827;
+      --border: rgba(255, 255, 255, 0.07);
+      --accent: #3b82f6;
+      --accent2: #6366f1;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --green: #10b981;
+      --cyan: #06b6d4;
+      --text: #f1f5f9;
+      --muted: #64748b;
+      --risk-low: #10b981;
+      --risk-med: #f59e0b;
+      --risk-high: #f97316;
+      --risk-crit: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, #0d1424 0%, #111827 50%, #0d1424 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-logo {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .data-badge {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .poc-badge {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--amber);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .view-btn {
+      padding: 6px 14px;
+      border-radius: 16px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+    }
+
+    .view-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .view-btn:not(.active):hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* FILTERS */
+    .filters {
+      padding: 14px 32px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .filter-btn {
+      padding: 5px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .filter-select {
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card2);
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+
+    /* MAIN LAYOUT */
+    .main {
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* KPI ROW */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .kpi-card.blue::before {
+      background: linear-gradient(90deg, #3b82f6, #6366f1);
+    }
+
+    .kpi-card.red::before {
+      background: linear-gradient(90deg, #ef4444, #f97316);
+    }
+
+    .kpi-card.amber::before {
+      background: linear-gradient(90deg, #f59e0b, #eab308);
+    }
+
+    .kpi-card.green::before {
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+    }
+
+    .kpi-card.purple::before {
+      background: linear-gradient(90deg, #8b5cf6, #6366f1);
+    }
+
+    .kpi-card.pink::before {
+      background: linear-gradient(90deg, #ec4899, #8b5cf6);
+    }
+
+    .kpi-card.cyan::before {
+      background: linear-gradient(90deg, #06b6d4, #3b82f6);
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 500;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 8px 0 4px;
+      letter-spacing: -1px;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .kpi-icon {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      font-size: 22px;
+      opacity: 0.35;
+    }
+
+    /* CHART GRID */
+    .chart-row {
+      display: grid;
+      gap: 20px;
+    }
+
+    .chart-row-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .chart-row-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .chart-row-main {
+      grid-template-columns: 2fr 1fr;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      position: relative;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-title .icon {
+      font-size: 15px;
+    }
+
+    .chart-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .chart-area {
+      position: relative;
+    }
+
+    /* HEATMAP */
+    .heatmap-container {
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .heatmap {
+      display: grid;
+      gap: 3px;
+      min-width: 600px;
+    }
+
+    .heatmap-header-row,
+    .heatmap-row {
+      display: grid;
+      gap: 3px;
+    }
+
+    .heatmap-cell {
+      height: 32px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+
+    .heatmap-cell:hover {
+      transform: scale(1.15);
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    .heatmap-label {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+      padding-right: 6px;
+    }
+
+    .heatmap-month-label {
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* RISK TABLE */
+    .risk-table-wrap {
+      overflow: auto;
+      max-height: 380px;
+    }
+
+    .risk-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .risk-table th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-card);
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .risk-table th:hover {
+      color: var(--text);
+    }
+
+    .risk-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      white-space: nowrap;
+    }
+
+    .risk-table tr:hover td {
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .risk-badge.critical {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .risk-badge.high {
+      background: rgba(249, 115, 22, 0.2);
+      color: #f97316;
+      border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .risk-badge.medium {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .risk-badge.low {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .risk-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .risk-bar-bg {
+      flex: 1;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 3px;
+      min-width: 60px;
+    }
+
+    .risk-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .bradford-cell {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* LEGEND */
+    .risk-legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .risk-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .risk-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* TOOLTIP */
+    .custom-tooltip {
+      position: fixed;
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+      max-width: 220px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .custom-tooltip.visible {
+      display: block;
+    }
+
+    .tt-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .tt-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 3px;
+    }
+
+    .tt-key {
+      color: var(--muted);
+    }
+
+    .tt-val {
+      font-weight: 600;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+
+    /* Responsive */
+    @media(max-width: 1200px) {
+      .kpi-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .chart-row-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width: 900px) {
+      .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .chart-row-2,
+      .chart-row-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .main {
+        padding: 16px;
+      }
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .pill-pos-fa {
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+    }
+
+    .pill-pos-ca {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .pill-pos-fo {
+      background: rgba(6, 182, 212, 0.2);
+      color: #22d3ee;
+    }
+
+    .pill-pos-ra {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+    }
+
+    .pill-pos-rf {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fde68a;
+    }
+
+    .pill-pos-rc {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fcd34d;
+    }
+
+    .pill-pos-fl {
+      background: rgba(139, 92, 246, 0.2);
+      color: #a78bfa;
+    }
+
+    .sort-arrow {
+      font-size: 10px;
+      opacity: 0.5;
+    }
+
+    .sort-arrow.active {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .tab-row {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: var(--accent);
+    }
+
+    .search-input {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card2);
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      width: 200px;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-input::placeholder {
+      color: var(--muted);
+    }
+
+    .bradford-scale {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .bs-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .bs-box {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .trend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 5px;
+    }
+
+    .trend-up {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
+    .trend-down {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+
+    /* ============ MODAL SYSTEM ============ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      display: flex;
+      justify-content: flex-end;
+      /* Slide from right */
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-panel {
+      width: min(850px, 95vw);
+      height: 100vh;
+      background: #0d1424;
+      background: linear-gradient(165deg, #0d1424 0%, #070b14 100%);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1001;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-overlay.open .modal-panel {
+      transform: translateX(0);
+    }
+
+    .modal-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      background: var(--red);
+      color: white;
+      border-color: var(--red);
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 32px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .modal-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--muted);
+      margin: 8px 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    .modal-profile {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .modal-stat-card,
+    .modal-stat {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.2s;
+    }
+
+    .modal-stat-card:hover,
+    .modal-stat:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .modal-stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .modal-stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .modal-stat-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .bradford-gauge-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .bradford-gauge-bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bradford-gauge-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #supModal .modal-panel,
+    #empModal .modal-panel {
+      width: min(850px, 95vw);
+    }
+
+    /* --- Modal Internal Components --- */
+    .abs-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .abs-code-label {
+      width: 120px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .abs-code-badge {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .abs-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .abs-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .abs-count {
+      width: 30px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .hr-action-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--muted);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      animation: slideIn 0.4s ease-out forwards;
+      opacity: 0;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(10px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .hr-action-card.support {
+      border-left-color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .hr-action-card.critical {
+      border-left-color: var(--red);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .hr-action-card.high {
+      border-left-color: var(--amber);
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .hr-action-card.medium {
+      border-left-color: var(--cyan);
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    .hr-action-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hr-action-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .hr-action-steps {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 11.5px;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hr-action-steps li::marker {
+      color: var(--muted);
+    }
+
+
+
+
+    .bradford-thresholds {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .bft-dot {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #64748b;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="header-left">
+      <div class="header-logo">✈</div>
+      <div>
+        <div class="header-title">Crew Absenteeism Intelligence Dashboard</div>
+        <div class="header-sub">FY 2025 · WS / WR Operations · Bradford Risk Analysis</div>
+      </div>
+    </div>
+    <div class="header-right" style="display:flex;gap:16px;align-items:center;">
+      <div class="view-toggle"
+        style="display:flex;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:4px;margin-right:20px;">
+        <button id="btn-view-op" class="view-btn active" onclick="switchView('operational')">Operational
+          Watchlist</button>
+        <button id="btn-view-macro" class="view-btn" onclick="switchView('macro')">Macro Loss Snapshot</button>
+        <button id="btn-view-bradford" class="view-btn" onclick="switchView('bradford')">Bradford Deviation</button>
+        <button id="btn-view-sup" class="view-btn" onclick="switchView('supervisor')">Supervisor View</button>
+      </div>
+      <span class="data-badge">100,342 Records · 7,243 Crew Members</span>
+      <span class="poc-badge">⚠ POC</span>
+    </div>
+  </header>
+
+  <div class="filters">
+    <span class="filter-label">Carrier:</span>
+    <button class="filter-btn active" onclick="setFilter('carrier','ALL',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('carrier','WS',this)">WS</button>
+    <button class="filter-btn" onclick="setFilter('carrier','WR',this)">WR</button>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Base:</span>
+    <select class="filter-select" id="baseFilter" onchange="setBaseFilter(this.value)">
+      <option value="ALL">All Bases</option>
+      <option value="YYZ">YYZ – Toronto</option>
+      <option value="YYC">YYC – Calgary</option>
+      <option value="YVR">YVR – Vancouver</option>
+      <option value="YEG">YEG – Edmonton</option>
+      <option value="YWG">YWG – Winnipeg</option>
+      <option value="YUL">YUL – Montréal</option>
+      <option value="YQB">YQB – Québec</option>
+      <option value="YHZ">YHZ – Halifax</option>
+    </select>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Position:</span>
+    <select class="filter-select" id="posFilter" onchange="setPosFilter(this.value)">
+      <option value="ALL">All Positions</option>
+      <option value="FA">FA – Flight Attendant</option>
+      <option value="CA">CA – Captain</option>
+      <option value="FO">FO – First Officer</option>
+      <option value="RA">RA – Relief Attendant</option>
+      <option value="RF">RF – Relief First Officer</option>
+      <option value="RC">RC – Relief Captain</option>
+      <option value="FL">FL – Flight Attendant Leader</option>
+    </select>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Risk:</span>
+    <button class="filter-btn active" onclick="setFilter('risk','ALL',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('risk','CRITICAL',this)" style="color:#ef4444;">Critical</button>
+    <button class="filter-btn" onclick="setFilter('risk','HIGH',this)" style="color:#f97316;">High</button>
+    <button class="filter-btn" onclick="setFilter('risk','MEDIUM',this)" style="color:#f59e0b;">Medium</button>
+    <button class="filter-btn" onclick="setFilter('risk','LOW',this)" style="color:#10b981;">Low</button>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Combined:</span>
+    <button class="filter-btn active" onclick="setFilter('combined','ALL',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('combined','CRITICAL',this)" style="color:#ef4444;">Critical</button>
+    <button class="filter-btn" onclick="setFilter('combined','HIGH',this)" style="color:#f97316;">High</button>
+    <button class="filter-btn" onclick="setFilter('combined','MEDIUM',this)" style="color:#f59e0b;">Medium</button>
+    <button class="filter-btn" onclick="setFilter('combined','LOW',this)" style="color:#10b981;">Low</button>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Support Program:</span>
+    <button class="filter-btn active" onclick="setFilter('program','ALL',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('program','QUALIFIED',this)" style="color:#ec4899;">Qualified</button>
+    <button class="filter-btn" onclick="setFilter('program','PROACTIVE',this)" style="color:#f472b6;">Proactive</button>
+    <button class="filter-btn" onclick="setFilter('program','REACTIVE',this)" style="color:#be185d;">Reactive</button>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Bradford:</span>
+    <input type="number" id="bradford-min" class="filter-select" style="width:80px;background:#0d1424;"
+      placeholder="Min" onchange="setBradfordFilter()">
+    <span style="color:var(--muted);">-</span>
+    <input type="number" id="bradford-max" class="filter-select" style="width:80px;background:#0d1424;"
+      placeholder="Max" onchange="setBradfordFilter()">
+  </div>
+
+  <div class="custom-tooltip" id="tooltip"></div>
+
+  <!-- ============ DASHBOARD BODY ============ -->
+  <div id="operational-view" class="main">
+
+    <!-- KPI ROW -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Crew Members</div>
+        <div class="kpi-value" id="kpi-employees">7,243</div>
+        <div class="kpi-sub">Total unique crew</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Critical Risk</div>
+        <div class="kpi-value" id="kpi-critical">—</div>
+        <div class="kpi-sub">Score ≥ 150</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Total Absences</div>
+        <div class="kpi-value" id="kpi-absences">100,342</div>
+        <div class="kpi-sub">All event records</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">No Shows (NSP)</div>
+        <div class="kpi-value" id="kpi-nsp">—</div>
+        <div class="kpi-sub">Highest severity code</div>
+      </div>
+      <div class="kpi-card cyan">
+        <div class="kpi-label">Late Arrivals</div>
+        <div class="kpi-value" id="kpi-laa">—</div>
+        <div class="kpi-sub">LAA events</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Avg Risk Score</div>
+        <div class="kpi-value" id="kpi-avg-risk">—</div>
+        <div class="kpi-sub">Seniority-weighted</div>
+      </div>
+      <div class="kpi-card pink">
+        <div class="kpi-label">Support Program</div>
+        <div class="kpi-value" id="kpi-program">—</div>
+        <div class="kpi-sub">Qualified crew members</div>
+      </div>
+    </div>
+
+    <!-- ROW 1: Monthly Trend + Donut -->
+    <div class="section-title"></div>
+    <div class="chart-row chart-row-main">
+      <div class="chart-card">
+        <div class="chart-title">Monthly Absence Volume by Type</div>
+        <div class="chart-desc">Stacked view of absence codes across FY 2025 — peaks in Dec highlight seasonal risk
+        </div>
+        <div class="chart-area"><canvas id="monthlyChart" height="220"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Absence Type Distribution</div>
+        <div class="chart-desc">Share of each absence code across total fleet events</div>
+        <div class="chart-area"><canvas id="donutChart" height="220"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Bradford Heatmap -->
+    <div class="section-title">Bradford Factor Heatmap — Base × Month</div>
+    <div class="chart-card">
+      <div class="chart-title">Bradford Factor Intensity by Station & Month</div>
+      <div class="chart-desc">
+        Bradford Formula: <strong>S² × D</strong> (S = spells/events, D = total days absent per base).
+        Darker red = higher operational risk. Click a cell for details.
+      </div>
+      <div class="bradford-scale">
+        <span style="font-size:11px;color:var(--muted);font-weight:600;">Scale:</span>
+        <div class="bs-item">
+          <div class="bs-box" style="background:#1a3a2a"></div>&lt; 1K
+        </div>
+        <div class="bs-item">
+          <div class="bs-box" style="background:#2d5a3a"></div>1K–5K
+        </div>
+        <div class="bs-item">
+          <div class="bs-box" style="background:#5a8a2a"></div>5K–15K
+        </div>
+        <div class="bs-item">
+          <div class="bs-box" style="background:#a8b820"></div>15K–30K
+        </div>
+        <div class="bs-item">
+          <div class="bs-box" style="background:#d4891a"></div>30K–60K
+        </div>
+        <div class="bs-item">
+          <div class="bs-box" style="background:#c84020"></div>60K–100K
+        </div>
+        <div class="bs-item">
+          <div class="bs-box" style="background:#a01010"></div>&gt; 100K
+        </div>
+      </div>
+      <div class="heatmap-container" id="heatmapContainer"></div>
+    </div>
+
+    <!-- ROW 3: Base Bar + Position -->
+    <div class="section-title">Station & Position Intelligence</div>
+    <div class="chart-row chart-row-2">
+      <div class="chart-card">
+        <div class="chart-title">Absence Volume by Base</div>
+        <div class="chart-desc">Total absence events and average risk score per station</div>
+        <div class="chart-area"><canvas id="baseChart" height="200"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Risk Profile by Position</div>
+        <div class="chart-desc">Weighted risk score vs. absence count — size reflects total crew members</div>
+        <div class="chart-area"><canvas id="positionChart" height="200"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Risk Score Distribution + Seniority Scatter -->
+    <div class="section-title">Risk Score Intelligence</div>
+    <div class="chart-row chart-row-2">
+      <div class="chart-card">
+        <div class="chart-title">Risk Score Distribution</div>
+        <div class="chart-desc">Number of crew members in each risk tier — Bradford-aligned thresholds</div>
+        <div class="chart-area"><canvas id="riskDistChart" height="200"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Seniority vs. Risk Score</div>
+        <div class="chart-desc">Scatter plot — X axis = bradford. Size = cost.</div>
+        <div class="chart-area"><canvas id="seniorityChart" height="200"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ROW 5: Top Risk Table -->
+    <div class="section-title">🚨 Crew Risk Watchlist</div>
+    <div class="chart-card">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="chart-title" style="margin-bottom:0"><span class="icon">🚨</span>Top Risk Employee Register</div>
+          <div class="chart-desc" style="margin-bottom:0">Employees ranked by seniority-adjusted composite risk score ·
+            Bradford thresholds applied</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input class="search-input" id="tableSearch" placeholder="🔍  Search employee…" oninput="filterTable()">
+          <div class="tab-row" style="margin-bottom:0">
+            <button class="tab-btn active" onclick="setTableLimit(50,this)">Top 50</button>
+            <button class="tab-btn" onclick="setTableLimit(100,this)">Top 100</button>
+            <button class="tab-btn" onclick="setTableLimit(9999,this)">All</button>
+          </div>
+        </div>
+      </div>
+      <div class="risk-legend" style="margin-bottom:14px;">
+        <div class="risk-legend-item">
+          <div class="risk-legend-dot" style="background:#ef4444"></div>Critical ≥ 150
+        </div>
+        <div class="risk-legend-item">
+          <div class="risk-legend-dot" style="background:#f97316"></div>High 100–149
+        </div>
+        <div class="risk-legend-item">
+          <div class="risk-legend-dot" style="background:#f59e0b"></div>Medium 50–99
+        </div>
+        <div class="risk-legend-item">
+          <div class="risk-legend-dot" style="background:#10b981"></div>Low &lt; 50
+        </div>
+        <div style="margin-left:auto;font-size:11px;color:var(--muted);">★ Lower emp # = more senior crew</div>
+      </div>
+      <div class="risk-table-wrap">
+        <table class="risk-table" id="riskTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('rank')"># <span class="sort-arrow" id="sort-rank">↕</span></th>
+              <th onclick="sortTable('emp_num')">Emp # <span class="sort-arrow" id="sort-emp_num">↕</span></th>
+              <th onclick="sortTable('base')">Base <span class="sort-arrow" id="sort-base">↕</span></th>
+              <th onclick="sortTable('position')">Position <span class="sort-arrow" id="sort-position">↕</span></th>
+              <th onclick="sortTable('sup_emp_num')">Supervisor <span class="sort-arrow" id="sort-sup_emp_num">↕</span>
+              </th>
+              <th onclick="sortTable('ft_pt')">FT/PT <span class="sort-arrow" id="sort-ft_pt">↕</span></th>
+              <th onclick="sortTable('risk_score')">Risk Score <span class="sort-arrow active"
+                  id="sort-risk_score">↓</span></th>
+              <th onclick="sortTable('bradford')">Bradford <span class="sort-arrow" id="sort-bradford">↕</span></th>
+              <th onclick="sortTable('combined_score')">Combined <span class="sort-arrow"
+                  id="sort-combined_score">↕</span></th>
+              <th onclick="sortTable('total_absences')">Total Abs <span class="sort-arrow"
+                  id="sort-total_absences">↕</span></th>
+              <th>NSP</th>
+              <th>LAA</th>
+              <th>LSK</th>
+              <th>BEV</th>
+              <th>SBL</th>
+              <th>Program</th>
+              <th>Risk Bar</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;font-size:11px;color:var(--muted);">
+      ⚠️ Proof of Concept — For Internal Use Only · Data as of April 15, 2026 · Risk scores use seniority-weighted
+      Bradford methodology
+    </div>
+
+  </div>
+
+  <script>
+
+    // ============================================================
+    // DATA LOADER
+    // ============================================================
+    let ALL_DATA = null;
+    let filteredEmployees = [];
+    let currentFilters = { carrier: 'ALL', base: 'ALL', position: 'ALL', risk: 'ALL', combined: 'ALL', bradford: 'ALL', program: 'ALL' };
+    let tableLimit = 50;
+    let sortCol = 'risk_score';
+    let sortDir = -1;
+    let searchVal = '';
+
+    // Charts
+    let monthlyChart, donutChart, baseChart, positionChart, riskDistChart, seniorityChart, modalPatternChart, supModalMonthlyChart, supRiskChart, supProgramChart;
+
+    // Append a timestamp cache-buster to ensure the latest real data sets are loaded after python script updates
+    fetch('dashboard_data.json?v=' + new Date().getTime())
+      .then(r => r.json())
+      .then(data => {
+        ALL_DATA = data;
+        init();
+      })
+      .catch(err => {
+        document.body.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:Inter,sans-serif;"><h2>⚠️ Could not load dashboard_data.json</h2><p style="color:#64748b;margin-top:8px;">Make sure this file is in the same directory as dashboard.html and serve via a local server.</p><pre style="margin-top:16px;font-size:12px;color:#475569;">' + err + '</pre></div>';
+      });
+
+    function init() {
+      applyFilters();
+    }
+
+    // ============================================================
+    // FILTERS
+    // ============================================================
+    function setFilter(type, val, btn) {
+      currentFilters[type] = val;
+      // Update button group
+      btn.closest('.filters').querySelectorAll(`.filter-btn`).forEach(b => {
+        if (b.closest('.filters') === btn.closest('.filters')) { } // skip
+      });
+      // Simpler: update siblings in same label group
+      let sibs = [...btn.parentElement.children].filter(c => c.classList.contains('filter-btn'));
+      sibs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilters();
+    }
+
+    function setBaseFilter(val) {
+      currentFilters.base = val;
+      applyFilters();
+    }
+
+    function setPosFilter(val) {
+      currentFilters.position = val;
+      applyFilters();
+    }
+
+    function setBradfordFilter() {
+      const min = document.getElementById('bradford-min').value;
+      const max = document.getElementById('bradford-max').value;
+      if (min || max) {
+        currentFilters.bradford = 'RANGE';
+      } else {
+        currentFilters.bradford = 'ALL';
+      }
+      applyFilters();
+    }
+
+    function setTableLimit(n, btn) {
+      tableLimit = n;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable();
+    }
+
+    function applyFilters() {
+      let emps = ALL_DATA.employees;
+      if (currentFilters.carrier !== 'ALL') emps = emps.filter(e => e.carrier === currentFilters.carrier);
+      if (currentFilters.base !== 'ALL') emps = emps.filter(e => e.base === currentFilters.base);
+      if (currentFilters.position !== 'ALL') emps = emps.filter(e => e.position === currentFilters.position);
+      if (currentFilters.risk === 'CRITICAL') emps = emps.filter(e => e.risk_score >= 150);
+      else if (currentFilters.risk === 'HIGH') emps = emps.filter(e => e.risk_score >= 100 && e.risk_score < 150);
+      else if (currentFilters.risk === 'MEDIUM') emps = emps.filter(e => e.risk_score >= 50 && e.risk_score < 100);
+      else if (currentFilters.risk === 'LOW') emps = emps.filter(e => e.risk_score < 50);
+
+      if (currentFilters.combined === 'CRITICAL') emps = emps.filter(e => e.combined_score >= 200);
+      else if (currentFilters.combined === 'HIGH') emps = emps.filter(e => e.combined_score >= 120 && e.combined_score < 200);
+      else if (currentFilters.combined === 'MEDIUM') emps = emps.filter(e => e.combined_score >= 80 && e.combined_score < 120);
+      else if (currentFilters.combined === 'LOW') emps = emps.filter(e => e.combined_score < 80);
+
+      if (currentFilters.bradford === 'CRITICAL') emps = emps.filter(e => e.bradford >= 50000);
+      else if (currentFilters.bradford === 'HIGH') emps = emps.filter(e => e.bradford >= 10000 && e.bradford < 50000);
+      else if (currentFilters.bradford === 'MEDIUM') emps = emps.filter(e => e.bradford >= 1000 && e.bradford < 10000);
+      else if (currentFilters.bradford === 'LOW') emps = emps.filter(e => e.bradford < 1000);
+      if (currentFilters.bradford === 'RANGE') {
+        const min = parseInt(document.getElementById('bradford-min').value) || 0;
+        const max = parseInt(document.getElementById('bradford-max').value) || Infinity;
+        emps = emps.filter(e => e.bradford >= min && e.bradford <= max);
+      }
+
+      if (currentFilters.program === 'QUALIFIED') emps = emps.filter(e => e.attendance_program_qualified === true);
+      else if (currentFilters.program === 'PROACTIVE') emps = emps.filter(e => e.attendance_program_type === 'Proactive');
+      else if (currentFilters.program === 'REACTIVE') emps = emps.filter(e => e.attendance_program_type === 'Reactive');
+
+      filteredEmployees = emps;
+      updateKPIs();
+      renderCharts();
+      renderHeatmap();
+      renderTable();
+    }
+
+    // ============================================================
+    // KPIs
+    // ============================================================
+    function fmt(n) { return n.toLocaleString(); }
+
+    function updateKPIs() {
+      const emps = filteredEmployees;
+      const total = emps.length;
+      const critical = emps.filter(e => e.risk_score >= 150).length;
+      const totalAbs = emps.reduce((s, e) => s + e.total_absences, 0);
+      const nsp = emps.reduce((s, e) => s + e.nsp, 0);
+      const laa = emps.reduce((s, e) => s + e.laa, 0);
+      const avgRisk = total ? (emps.reduce((s, e) => s + e.risk_score, 0) / total).toFixed(1) : 0;
+      const programQualified = emps.filter(e => e.attendance_program_qualified === true).length;
+      const programProactive = emps.filter(e => e.attendance_program_type === 'Proactive').length;
+      const programReactive = emps.filter(e => e.attendance_program_type === 'Reactive').length;
+
+      document.getElementById('kpi-employees').textContent = fmt(total);
+      document.getElementById('kpi-critical').textContent = fmt(critical);
+      document.getElementById('kpi-absences').textContent = fmt(totalAbs);
+      document.getElementById('kpi-nsp').textContent = fmt(nsp);
+      document.getElementById('kpi-laa').textContent = fmt(laa);
+      document.getElementById('kpi-avg-risk').textContent = avgRisk;
+      document.getElementById('kpi-program').textContent = fmt(programQualified) + ` (${programProactive}P / ${programReactive}R)`;
+    }
+
+    // ============================================================
+    // CHARTS
+    // ============================================================
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const MONTH_KEYS = ['2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08', '2025-09', '2025-10', '2025-11', '2025-12'];
+
+    const CODE_COLORS = {
+      SCK: '#3b82f6', NSP: '#ef4444', LAA: '#f97316', LSK: '#f59e0b',
+      SBL: '#8b5cf6', UAV: '#06b6d4', FAT: '#10b981', BEV: '#ec4899',
+      BRU: '#db2777', PDP: '#64748b', PDU: '#475569', COS: '#dc2626', UFT: '#a78bfa'
+    };
+    const CODE_LABELS = {
+      SCK: 'Sick', NSP: 'No Show', LAA: 'Late Arrival', LSK: 'Late Sick Call',
+      SBL: 'Sick Before Leave', UAV: 'Unavailable', FAT: 'Fatigue',
+      BEV: 'Bereavement', BRU: 'Bereavement Unpaid', PDP: 'Personal Paid',
+      PDU: 'Personal Unpaid', COS: 'Not Mtg Standards', UFT: 'Other'
+    };
+
+    function renderCharts() {
+      renderMonthly();
+      renderDonut();
+      renderBase();
+      renderPosition();
+      renderRiskDist();
+      renderSeniority();
+      renderMacroView();
+    }
+
+    function destroyChart(chart) {
+      if (chart) chart.destroy();
+    }
+
+    function renderMonthly() {
+      destroyChart(monthlyChart);
+      // Aggregate monthly by code from filtered employees
+      const monthCode = {};
+      MONTH_KEYS.forEach(m => monthCode[m] = {});
+      const codes = ['NSP', 'LAA', 'LSK', 'SBL', 'UAV', 'FAT', 'SCK', 'BEV', 'BRU', 'PDP', 'PDU', 'COS', 'UFT'];
+
+      // Use the raw monthly_by_code data but filter by base/carrier if needed
+      // For simplicity with filters: recompute from employees list approach
+      // Map emp->dates is complex without date detail. Use ALL_DATA.monthly_by_code for display
+      const src = ALL_DATA.monthly_by_code;
+
+      const datasets = codes.map(code => ({
+        label: CODE_LABELS[code] || code,
+        data: MONTH_KEYS.map(m => src[m]?.[code] || 0),
+        backgroundColor: CODE_COLORS[code] + 'bb',
+        borderColor: CODE_COLORS[code],
+        borderWidth: 1,
+        stack: 'stack'
+      })).filter(d => d.data.some(v => v > 0));
+
+      const ctx = document.getElementById('monthlyChart').getContext('2d');
+      monthlyChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: MONTHS, datasets },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          plugins: { legend: { display: false }, datalabels: { display: false } },
+          scales: {
+            x: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11, family: 'Inter' } } },
+            y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11, family: 'Inter' }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v } }
+          }
+        }
+      });
+    }
+
+    function renderDonut() {
+      destroyChart(donutChart);
+      const emps = filteredEmployees;
+      const codeTotals = {};
+      emps.forEach(e => {
+        Object.entries(e.codes).forEach(([c, n]) => {
+          codeTotals[c] = (codeTotals[c] || 0) + n;
+        });
+      });
+      const sorted = Object.entries(codeTotals).sort((a, b) => b[1] - a[1]);
+      const labels = sorted.map(([c]) => CODE_LABELS[c] || c);
+      const values = sorted.map(([, n]) => n);
+      const colors = sorted.map(([c]) => CODE_COLORS[c] || '#475569');
+
+      const ctx = document.getElementById('donutChart').getContext('2d');
+      donutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#0d1424', hoverOffset: 8 }] },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          cutout: '68%',
+          plugins: {
+            legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10, family: 'Inter' }, padding: 8, boxWidth: 10, boxHeight: 10 } },
+            datalabels: { display: false }
+          }
+        }
+      });
+    }
+
+    function renderBase() {
+      destroyChart(baseChart);
+      const bases = ['YYZ', 'YYC', 'YVR', 'YEG', 'YWG', 'YUL', 'YQB', 'YHZ'];
+      const baseNames = ['Toronto', 'Calgary', 'Vancouver', 'Edmonton', 'Winnipeg', 'Montréal', 'Québec', 'Halifax'];
+
+      const empsByBase = {};
+      bases.forEach(b => empsByBase[b] = []);
+      filteredEmployees.forEach(e => { if (empsByBase[e.base]) empsByBase[e.base].push(e); });
+
+      const absences = bases.map(b => empsByBase[b].reduce((s, e) => s + e.total_absences, 0));
+      const avgRisk = bases.map(b => {
+        const emps = empsByBase[b];
+        return emps.length ? +(emps.reduce((s, e) => s + e.risk_score, 0) / emps.length).toFixed(1) : 0;
+      });
+
+      const ctx = document.getElementById('baseChart').getContext('2d');
+      baseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: baseNames,
+          datasets: [
+            { label: 'Total Absences', data: absences, backgroundColor: bases.map(_ => 'rgba(59,130,246,0.6)'), borderColor: '#3b82f6', borderWidth: 1, yAxisID: 'y' },
+            { label: 'Avg Risk Score', data: avgRisk, type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#f59e0b', tension: 0.4, yAxisID: 'y2' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          plugins: { legend: { labels: { color: '#64748b', font: { size: 10, family: 'Inter' }, boxWidth: 10 } }, datalabels: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v }, position: 'left' },
+            y2: { ticks: { color: '#f59e0b', font: { size: 10 } }, grid: { display: false }, position: 'right' }
+          }
+        }
+      });
+    }
+
+    function renderPosition() {
+      destroyChart(positionChart);
+      const positions = ['FA', 'CA', 'FO', 'RA', 'RF', 'RC', 'FL'];
+      const posNames = ['Flight Attendant', 'Captain', 'First Officer', 'Relief attendant', 'Relief first officer', 'Relief captain', 'Flight attendant Leader'];
+      const posColors = ['#6366f1', '#10b981', '#06b6d4', '#f59e0b', '#f97316', '#ef4444', '#8b5cf6'];
+
+      const empsByPos = {};
+      positions.forEach(p => empsByPos[p] = []);
+      filteredEmployees.forEach(e => { if (empsByPos[e.position]) empsByPos[e.position].push(e); });
+
+      const avgRisk = positions.map(p => {
+        const emps = empsByPos[p];
+        return emps.length ? +(emps.reduce((s, e) => s + e.risk_score, 0) / emps.length).toFixed(1) : 0;
+      });
+      const counts = positions.map(p => empsByPos[p].length);
+
+      const ctx = document.getElementById('positionChart').getContext('2d');
+      positionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: posNames,
+          datasets: [{
+            label: 'Avg Risk Score',
+            data: avgRisk,
+            backgroundColor: posColors.map(c => c + 'aa'),
+            borderColor: posColors,
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            datalabels: { display: true, anchor: 'end', align: 'right', color: '#94a3b8', font: { size: 10, family: 'Inter' }, formatter: (v, ctx2) => `${v} (n=${counts[ctx2.dataIndex]})` }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 10 } }, max: 80 },
+            y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11, family: 'Inter' } } }
+          }
+        }
+      });
+    }
+
+    function renderRiskDist() {
+      destroyChart(riskDistChart);
+      const tiers = [
+        { label: 'Critical\n(≥150)', color: '#ef4444', min: 150, max: Infinity },
+        { label: 'High\n(100-149)', color: '#f97316', min: 100, max: 150 },
+        { label: 'Medium\n(50-99)', color: '#f59e0b', min: 50, max: 100 },
+        { label: 'Low\n(<50)', color: '#10b981', min: 0, max: 50 },
+      ];
+      const counts = tiers.map(t => filteredEmployees.filter(e => e.risk_score >= t.min && e.risk_score < t.max).length);
+
+      const ctx = document.getElementById('riskDistChart').getContext('2d');
+      riskDistChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Critical (≥150)', 'High (100-149)', 'Medium (50-99)', 'Low (<50)'],
+          datasets: [{ data: counts, backgroundColor: ['rgba(239,68,68,0.8)', 'rgba(249,115,22,0.8)', 'rgba(245,158,11,0.8)', 'rgba(16,185,129,0.8)'], borderWidth: 2, borderColor: '#0d1424', hoverOffset: 8 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          cutout: '60%',
+          plugins: {
+            legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10, family: 'Inter' }, padding: 10, boxWidth: 10, boxHeight: 10 } },
+            datalabels: {
+              display: true,
+              color: '#fff',
+              font: { size: 11, weight: 'bold', family: 'Inter' },
+              formatter: (v, ctx2) => v > 0 ? v.toLocaleString() : '',
+            }
+          }
+        }
+      });
+    }
+
+    function renderSeniority() {
+      destroyChart(seniorityChart);
+      // Sample top 500 for scatter to keep it fast
+      const sample = filteredEmployees.slice(0, 500);
+      const maxCost = Math.max(...sample.map(e => ((e.codes.SBL || 0) * 600) + (((e.total_absences || 0) - (e.codes.SBL || 0)) * 450)), 1);
+
+      const datasets = ['FA', 'CA', 'FO', 'RA', 'RF', 'RC', 'FL'].map((pos, i) => {
+        const posColors = ['#6366f1', '#10b981', '#06b6d4', '#f59e0b', '#f97316', '#ef4444', '#8b5cf6'];
+        const pts = sample.filter(e => e.position === pos).map(e => ({
+          x: e.bradford,
+          y: e.risk_score,
+          r: Math.max(3, Math.min(18, ((((e.codes.SBL || 0) * 600) + (((e.total_absences || 0) - (e.codes.SBL || 0)) * 450)) / maxCost) * 18)),
+          emp: e.emp,
+          base: e.base,
+          bradford: e.bradford,
+          cost: ((e.codes.SBL || 0) * 600) + (((e.total_absences || 0) - (e.codes.SBL || 0)) * 450),
+          total: e.total_absences
+        }));
+      return { label: pos, data: pts, backgroundColor: posColors[i] + '99', borderColor: posColors[i], borderWidth: 1 };
+    });
+
+    const ctx = document.getElementById('seniorityChart').getContext('2d');
+    seniorityChart = new Chart(ctx, {
+      type: 'bubble',
+      data: { datasets: datasets.filter(d => d.data.length > 0) },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: {
+          legend: { labels: { color: '#64748b', font: { size: 10, family: 'Inter' }, boxWidth: 10, boxHeight: 10 } },
+          datalabels: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx2 => {
+                const p = ctx2.raw;
+                return [`Emp #${p.emp}`, `Base: ${p.base}`, `Risk: ${p.y}`, `Bradford: ${p.bradford.toLocaleString()}`, `Cost: $${p.cost.toLocaleString()}`, `Absences: ${p.total}`];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v }, title: { display: true, text: 'Employee # (lower = more senior)', color: '#475569', font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 10 } }, title: { display: true, text: 'Risk Score', color: '#475569', font: { size: 10 } } }
+        }
+      }
+    });
+    }
+
+    function renderMacroView() {
+      // Logic for computing costs
+      let totalEvents = 0;
+      let totalSBL = 0;
+      let totalCost = 0;
+      let sblCost = 0;
+
+      let monthlyCosts = Array(12).fill(0);
+      let baseCosts = {};
+
+      filteredEmployees.forEach(e => {
+        let e_sbl = e.codes.SBL || 0;
+        let e_total = e.total_absences || 0;
+
+        // Cost Model: $600 for SBL, $450 for standard absence
+        let e_money = (e_sbl * 600) + ((e_total - e_sbl) * 450);
+
+        totalEvents += e_total;
+        totalSBL += e_sbl;
+        totalCost += e_money;
+        sblCost += (e_sbl * 600);
+
+        // Base distribution
+        let b = e.base || 'UNKNOWN';
+        if (!baseCosts[b]) baseCosts[b] = 0;
+        baseCosts[b] += e_money;
+
+        // Monthly distribution based on real event dates
+        if (e.monthly_events) {
+          Object.keys(e.monthly_events).forEach(code => {
+            const costPerEvent = (code === 'SBL') ? 600 : 450;
+            for (let i = 0; i < 12; i++) {
+              monthlyCosts[i] += (e.monthly_events[code][i] || 0) * costPerEvent;
+            }
+          });
+        }
+      });
+
+      // Update Macro KPIs
+      document.getElementById('kpi-loss-financial').innerText = '$' + totalCost.toLocaleString();
+      document.getElementById('kpi-loss-hours').innerText = (totalEvents * 8).toLocaleString() + ' hrs';
+      document.getElementById('kpi-loss-sbl').innerText = '$' + sblCost.toLocaleString();
+
+      // Top 10 Costliest Employees
+      const sortedByCost = [...filteredEmployees].sort((a, b) => {
+        let b_cost = ((b.codes.SBL || 0) * 600) + (((b.total_absences || 0) - (b.codes.SBL || 0)) * 450);
+        let a_cost = ((a.codes.SBL || 0) * 600) + (((a.total_absences || 0) - (a.codes.SBL || 0)) * 450);
+        return b_cost - a_cost;
+      }).slice(0, 10);
+
+      document.getElementById('macro-worst-table').innerHTML = sortedByCost.map((e, idx) => {
+        let e_cost = ((e.codes.SBL || 0) * 600) + (((e.total_absences || 0) - (e.codes.SBL || 0)) * 450);
+        return `
+          <tr onclick="openEmployeeModal(${e.emp})" style="cursor:pointer;" class="clickable-row">
+            <td style="font-weight:700;color:var(--red);">#${idx + 1}</td>
+            <td><strong>EMP-${e.emp_num}</strong></td>
+            <td>${e.carrier}</td>
+            <td><span class="base-badge">${e.base}</span></td>
+            <td>${e.total_absences}</td>
+            <td style="color:var(--amber);font-weight:600;">${e.codes.SBL || 0}</td>
+            <td style="font-weight:700;">$${e_cost.toLocaleString()}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Render Charts
+      if (macroRunRateChart) macroRunRateChart.destroy();
+      const ctxRunRate = document.getElementById('macroRunRateChart').getContext('2d');
+      macroRunRateChart = new Chart(ctxRunRate, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+          datasets: [{
+            label: 'Est. Monthly Financial Loss ($)',
+            data: monthlyCosts,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b' } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', callback: v => '$' + (v / 1000) + 'k' } }
+          }
+        }
+      });
+
+      if (macroBaseChart) macroBaseChart.destroy();
+      const sortedBases = Object.entries(baseCosts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const ctxBase = document.getElementById('macroBaseChart').getContext('2d');
+      macroBaseChart = new Chart(ctxBase, {
+        type: 'bar',
+        data: {
+          labels: sortedBases.map(b => b[0]),
+          datasets: [{
+            data: sortedBases.map(b => b[1]),
+            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', callback: v => '$' + (v / 1000) + 'k' } },
+            y: { grid: { display: false }, ticks: { color: '#f1f5f9', font: { weight: 'bold' } } }
+          }
+        }
+      });
+    }
+
+    // ============================================================
+    // BRADFORD HEATMAP
+    // ============================================================
+    function renderHeatmap() {
+      const container = document.getElementById('heatmapContainer');
+      const bases = ['YYZ', 'YYC', 'YVR', 'YEG', 'YWG', 'YUL'];
+      const baseLabels = { YYZ: 'YYZ Toronto', YYC: 'YYC Calgary', YVR: 'YVR Vancouver', YEG: 'YEG Edmonton', YWG: 'YWG Winnipeg', YUL: 'YUL Montréal' };
+
+      // Compute Bradford per base per month from employees
+      // Bradford = S^2 * D where S = events, D = total days
+      // Use ALL_DATA.monthly_by_base for event counts
+      const src = ALL_DATA.monthly_by_base;
+
+      // Bradford = events^2 * events (since each row = 1 event = 1 day approximately)
+      // More precisely: per base per month: S = count of absence events, D = count of days
+      // Since no duration info, treat S = D = count of events
+      // Bradford = S^2 * D = n^3? No — standard: S = spells, D = total days lost
+      // Use: S = events_per_month, D = events_per_month (1 day each)
+      // Bradford = S^2 * D
+      function getBradford(base, month) {
+        const n = src[base]?.[month] || 0;
+        if (n === 0) return 0;
+        return n * n * n; // S=n, D=n approximation
+      }
+
+      // Find global max for scaling
+      let gMax = 0;
+      bases.forEach(b => MONTH_KEYS.forEach(m => { const v = getBradford(b, m); if (v > gMax) gMax = v; }));
+
+      function bradfordColor(val, max) {
+        if (val === 0) return '#0f172a';
+        const ratio = Math.log(val + 1) / Math.log(max + 1);
+        if (ratio < 0.15) return '#1e3a2a';
+        if (ratio < 0.30) return '#2d5a3a';
+        if (ratio < 0.45) return '#4a7a28';
+        if (ratio < 0.60) return '#7a9a18';
+        if (ratio < 0.72) return '#b87a14';
+        if (ratio < 0.85) return '#c84020';
+        return '#9a0a08';
+      }
+
+      const cols = MONTH_KEYS.length + 1;
+      let html = '<div class="heatmap" style="grid-template-columns: 140px ' + MONTH_KEYS.map(_ => '1fr').join(' ') + ';">';
+
+      // Header row
+      html += '<div class="heatmap-label"></div>';
+      MONTHS.forEach((m, i) => {
+        html += `<div class="heatmap-month-label">${m}</div>`;
+      });
+
+      // Data rows
+      bases.forEach(base => {
+        html += `<div class="heatmap-label">${baseLabels[base]}</div>`;
+        MONTH_KEYS.forEach((mk, mi) => {
+          const val = getBradford(base, mk);
+          const color = bradfordColor(val, gMax);
+          const events = src[base]?.[mk] || 0;
+          const brad = val.toLocaleString();
+          html += `<div class="heatmap-cell" 
+        style="background:${color};" 
+        onmouseenter="showTooltip(event,'${base} · ${MONTHS[mi]}','Events: ${events}','Bradford: ${brad}')"
+        onmouseleave="hideTooltip()">
+        <span style="color:rgba(255,255,255,0.7);text-shadow:0 1px 2px rgba(0,0,0,0.8)">${events > 0 ? events : ''}</span>
+      </div>`;
+        });
+      });
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ============================================================
+    // TOOLTIP
+    // ============================================================
+    function showTooltip(e, title, line1, line2) {
+      const t = document.getElementById('tooltip');
+      t.innerHTML = `<div class="tt-title">${title}</div>
+    <div class="tt-row"><span class="tt-key">${line1.split(':')[0]}</span><span class="tt-val">${line1.split(':').slice(1).join(':')}</span></div>
+    <div class="tt-row"><span class="tt-key">${line2.split(':')[0]}</span><span class="tt-val">${line2.split(':').slice(1).join(':')}</span></div>`;
+      t.classList.add('visible');
+      moveTooltip(e);
+    }
+    function moveTooltip(e) {
+      const t = document.getElementById('tooltip');
+      t.style.left = (e.clientX + 14) + 'px';
+      t.style.top = (e.clientY - 10) + 'px';
+    }
+    function hideTooltip() {
+      document.getElementById('tooltip').classList.remove('visible');
+    }
+    document.addEventListener('mousemove', e => {
+      const t = document.getElementById('tooltip');
+      if (t.classList.contains('visible')) moveTooltip(e);
+    });
+
+    // ============================================================
+    // RISK TABLE
+    // ============================================================
+    function riskTier(score) {
+      if (score >= 150) return { label: 'CRITICAL', cls: 'critical' };
+      if (score >= 100) return { label: 'HIGH', cls: 'high' };
+      if (score >= 50) return { label: 'MEDIUM', cls: 'medium' };
+      return { label: 'LOW', cls: 'low' };
+    }
+    function riskBarColor(score) {
+      if (score >= 150) return '#ef4444';
+      if (score >= 100) return '#f97316';
+      if (score >= 50) return '#f59e0b';
+      return '#10b981';
+    }
+    function combinedTier(score) {
+      if (score >= 200) return { label: 'CRITICAL', cls: 'critical' };
+      if (score >= 120) return { label: 'HIGH', cls: 'high' };
+      if (score >= 80) return { label: 'MEDIUM', cls: 'medium' };
+      return { label: 'LOW', cls: 'low' };
+    }
+    function combinedBarColor(score) {
+      if (score >= 200) return '#ef4444';
+      if (score >= 120) return '#f97316';
+      if (score >= 80) return '#f59e0b';
+      return '#10b981';
+    }
+    function posClass(pos) {
+      const map = { FA: 'fa', CA: 'ca', FO: 'fo', RA: 'ra', RF: 'rf', RC: 'rc', FL: 'fl' };
+      return 'pill pill-pos-' + (map[pos] || 'fa');
+    }
+    function posLabel(pos) {
+      const map = { FA: 'Flight Att.', CA: 'Captain', FO: 'First Off.', RA: 'Relief attendant', RF: 'Relief first officer', RC: 'Relief captain', FL: 'Flt attendant Leader' };
+      return map[pos] || pos;
+    }
+
+    let tableData = [];
+    let sortedData = [];
+
+    function sortTable(col) {
+      if (sortCol === col) { sortDir *= -1; }
+      else { sortCol = col; sortDir = col === 'rank' ? 1 : -1; }
+      document.querySelectorAll('.sort-arrow').forEach(a => { a.classList.remove('active'); a.textContent = '↕'; });
+      const arrow = document.getElementById('sort-' + col);
+      if (arrow) { arrow.classList.add('active'); arrow.textContent = sortDir === 1 ? '↑' : '↓'; }
+      renderTable();
+    }
+
+    function filterTable() {
+      searchVal = document.getElementById('tableSearch').value.toLowerCase();
+      renderTable();
+    }
+
+    function renderTable() {
+      let data = [...filteredEmployees];
+      // assign rank before sorting
+      const maxRisk = data.length ? Math.max(...data.map(e => e.risk_score)) : 1;
+
+      if (sortCol === 'rank') data.sort((a, b) => sortDir * (b.risk_score - a.risk_score));
+      else if (['emp_num', 'risk_score', 'bradford', 'combined_score', 'total_absences', 'sup_emp_num'].includes(sortCol)) {
+        data.sort((a, b) => sortDir * (a[sortCol] - b[sortCol]));
+        if (['risk_score', 'bradford', 'combined_score', 'total_absences'].includes(sortCol)) data.sort((a, b) => sortDir * (b[sortCol] - a[sortCol]));
+      } else {
+        data.sort((a, b) => sortDir * String(a[sortCol]).localeCompare(String(b[sortCol])));
+      }
+
+      if (searchVal) {
+        data = data.filter(e =>
+          String(e.emp).includes(searchVal) ||
+          e.base.toLowerCase().includes(searchVal) ||
+          e.position.toLowerCase().includes(searchVal) ||
+          String(e.sup_emp_num).includes(searchVal) ||
+          e.ft_pt.toLowerCase().includes(searchVal)
+        );
+      }
+
+      const limited = data.slice(0, tableLimit);
+      const maxRiskFiltered = data.length ? Math.max(...data.map(e => e.risk_score), 1) : 1;
+
+      const tbody = document.getElementById('tableBody');
+      if (!limited.length) { tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:var(--muted);padding:24px;">No employees match the current filters.</td></tr>'; return; }
+
+      tbody.innerHTML = limited.map((e, i) => {
+        const tier = riskTier(e.risk_score);
+        const barPct = Math.min(100, (e.risk_score / maxRiskFiltered) * 100);
+        const barColor = riskBarColor(e.risk_score);
+        const combTier = combinedTier(e.combined_score);
+        const combBarColor = combinedBarColor(e.combined_score);
+        const seniority = e.emp_num < 10000 ? '⭐' : (e.emp_num < 20000 ? '●' : '○');
+        const programTypeColor = e.attendance_program_type === 'Proactive' ? 'rgba(244,114,182,0.15)' : 'rgba(190,24,93,0.15)';
+        const programTypeText = e.attendance_program_type === 'Proactive' ? '#f472b6' : '#be185d';
+        const programBadge = e.attendance_program_qualified
+          ? `<span class="pill" style="background:${programTypeColor};color:${programTypeText};">${e.attendance_program_type}</span>`
+          : '—';
+        const ftPtBadge = e.is_fulltime
+          ? '<span class="pill" style="background:rgba(16,185,129,0.15);color:#34d399;">FT</span>'
+          : '<span class="pill" style="background:rgba(245,158,11,0.15);color:#fbbf24;">PT</span>';
+        return `<tr onclick="openEmployeeModal(${e.emp})" title="Click for HR action plan" style="cursor:pointer;">
+      <td style="color:var(--muted);font-weight:500;">${i + 1}</td>
+      <td><span style="font-weight:700;font-variant-numeric:tabular-nums;">${e.emp_num}</span> <span style="font-size:12px;" title="Seniority">${seniority}</span></td>
+      <td><span style="font-weight:600;color:#06b6d4;">${e.base}</span></td>
+      <td><span class="${posClass(e.position)}">${posLabel(e.position)}</span></td>
+      <td><span style="color:#94a3b8;font-weight:600;">${e.sup_emp_num || '—'}</span></td>
+      <td>${ftPtBadge}</td>
+      <td><span class="risk-badge ${tier.cls}">${tier.label}</span> <span style="font-size:11px;font-weight:700;margin-left:4px;">${e.risk_score}</span></td>
+      <td class="bradford-cell" style="color:${barColor}">${e.bradford.toLocaleString()}</td>
+      <td><span class="risk-badge ${combTier.cls}">${combTier.label}</span> <span style="font-size:11px;font-weight:700;margin-left:4px;">${e.combined_score}</span></td>
+      <td style="font-weight:600;">${e.total_absences}</td>
+      <td style="color:${e.nsp > 0 ? '#ef4444' : 'var(--muted)'};font-weight:${e.nsp > 0 ? '700' : '400'}">${e.nsp || '—'}</td>
+      <td style="color:${e.laa > 0 ? '#f97316' : 'var(--muted)'};font-weight:${e.laa > 0 ? '700' : '400'}">${e.laa || '—'}</td>
+      <td style="color:${e.lsk > 0 ? '#f59e0b' : 'var(--muted)'};font-weight:${e.lsk > 0 ? '700' : '400'}">${e.lsk || '—'}</td>
+      <td style="color:${e.bev > 0 ? '#ec4899' : 'var(--muted)'};font-weight:${e.bev > 0 ? '600' : '400'}">${e.bev || '—'}</td>
+      <td style="color:${e.sbl > 0 ? '#8b5cf6' : 'var(--muted)'};font-weight:${e.sbl > 0 ? '600' : '400'}">${e.sbl || '—'}</td>
+      <td>${programBadge}</td>
+      <td>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:${barPct}%;background:${barColor};"></div></div>
+        </div>
+      </td>
+    </tr>`;
+      }).join('');
+    }
+
+    // ============================================================
+    // EMPLOYEE DETAIL MODAL — opens on row click
+    // ============================================================
+    const CODE_COLORS_MODAL = {
+      SCK: '#3b82f6', NSP: '#ef4444', LAA: '#f97316', LSK: '#f59e0b',
+      SBL: '#8b5cf6', UAV: '#06b6d4', FAT: '#10b981', BEV: '#ec4899',
+      BRU: '#db2777', PDP: '#64748b', PDU: '#475569', COS: '#dc2626', UFT: '#a78bfa'
+    };
+    const CODE_LABELS_MODAL = {
+      SCK: 'Sick', NSP: 'No Show', LAA: 'Late Arrival', LSK: 'Late Sick Call',
+      SBL: 'Sick Before Leave', UAV: 'Unavailable', FAT: 'Fatigue',
+      BEV: 'Bereavement', BRU: 'Bereavement Unpaid', PDP: 'Personal Paid',
+      PDU: 'Personal Unpaid', COS: 'Not Mtg Standards', UFT: 'Other'
+    };
+    const RISK_WEIGHT_MODAL = {
+      NSP: 10, LAA: 8, LSK: 7, COS: 7, SBL: 6, UAV: 5, FAT: 4, SCK: 3, PDU: 2, UFT: 2, BEV: 2, BRU: 2, PDP: 1
+    };
+
+    let currentModalEmployee = null;
+    let macroRunRateChart, macroBaseChart;
+
+    function switchView(view) {
+      document.getElementById('btn-view-op').classList.remove('active');
+      document.getElementById('btn-view-macro').classList.remove('active');
+      document.getElementById('btn-view-bradford').classList.remove('active');
+      document.getElementById('btn-view-sup').classList.remove('active');
+      document.getElementById('operational-view').style.display = 'none';
+      document.getElementById('macro-view').style.display = 'none';
+      document.getElementById('bradford-view').style.display = 'none';
+      document.getElementById('supervisor-view').style.display = 'none';
+
+      if (view === 'operational') {
+        document.getElementById('btn-view-op').classList.add('active');
+        document.getElementById('operational-view').style.display = 'flex';
+      } else if (view === 'macro') {
+        document.getElementById('btn-view-macro').classList.add('active');
+        document.getElementById('macro-view').style.display = 'flex';
+        updateMacroView();
+      } else if (view === 'bradford') {
+        document.getElementById('btn-view-bradford').classList.add('active');
+        document.getElementById('bradford-view').style.display = 'flex';
+        updateBradfordDeviation();
+      } else if (view === 'supervisor') {
+        document.getElementById('btn-view-sup').classList.add('active');
+        document.getElementById('supervisor-view').style.display = 'flex';
+        if (!ALL_SUPERVISOR_DATA) buildSupervisorData();
+        renderSupervisorView();
+      }
+    }
+
+    function openEmployeeModal(empId) {
+      const e = ALL_DATA.employees.find(x => x.emp === empId);
+      if (!e) return;
+      currentModalEmployee = e;
+
+      // Reset inputs
+      document.getElementById('modal-bday-month').value = "";
+      document.getElementById('modal-event-select').value = "none";
+
+      const tier = riskTier(e.risk_score);
+      const combTier = combinedTier(e.combined_score);
+      const tierColors = { critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#10b981' };
+      const tierColor = tierColors[tier.cls];
+      const combTierColor = tierColors[combTier.cls];
+      const seniorityLabel = e.emp_num < 5000 ? '⭐⭐ Very Senior (Top 5K)'
+        : e.emp_num < 15000 ? '⭐ Senior'
+          : e.emp_num < 30000 ? 'Mid-Seniority'
+            : 'Junior';
+      const posFullLabel = {
+        FA: 'Flight Attendant', CA: 'Captain', FO: 'First Officer',
+        RA: 'Relief Attendant', RF: 'Relief First Officer',
+        RC: 'Relief Captain', FL: 'Flight Attendant Leader'
+      };
+
+      document.getElementById('modal-emp-id').textContent = 'Employee #' + e.emp_num;
+      document.getElementById('modal-subtitle').innerHTML =
+        (posFullLabel[e.position] || e.position) + ' &nbsp;·&nbsp; ' + e.base +
+        ' &nbsp;·&nbsp; ' + e.carrier +
+        ' &nbsp;·&nbsp; <span style="color:' + tierColor + ';font-weight:700;">' + tier.label + ' RISK</span>' +
+        ' &nbsp;·&nbsp; <span style="color:' + combTierColor + ';font-weight:700;">' + combTier.label + ' COMBINED</span>';
+
+      // Profile Stats
+      const rs = document.getElementById('modal-risk');
+      rs.textContent = e.risk_score; rs.style.color = tierColor;
+      const bf = document.getElementById('modal-bradford');
+      bf.textContent = e.bradford.toLocaleString(); bf.style.color = tierColor;
+      const cs = document.getElementById('modal-combined');
+      if (cs) { cs.textContent = e.combined_score; cs.style.color = combTierColor; }
+      document.getElementById('modal-total-abs').textContent = e.total_absences;
+      document.getElementById('modal-seniority').textContent = seniorityLabel;
+      document.getElementById('modal-carrier').textContent = e.carrier + (e.ft_pt ? ' · ' + (e.ft_pt.includes('Full') ? 'Full-time' : 'Part-time') : '');
+
+      // Bradford gauge
+      const maxBradRef = 830584;
+      const gaugeW = Math.min(100, (Math.log(e.bradford + 1) / Math.log(maxBradRef + 1)) * 100);
+      document.getElementById('modal-bradford-fill').style.width = gaugeW + '%';
+      const bfTier = e.bradford < 10 ? { label: 'Below Trigger', cls: 'low' }
+        : e.bradford < 200 ? { label: 'Monitor', cls: 'medium' }
+          : e.bradford < 900 ? { label: 'Caution Zone', cls: 'warning' }
+            : { label: 'Formal Action', cls: 'critical' };
+      document.getElementById('modal-bradford-tier').innerHTML =
+        '<span class="risk-badge ' + bfTier.cls + '" style="font-size:10px;">' + bfTier.label + '</span>';
+
+      // Absence breakdown
+      const sortedCodes = Object.entries(e.codes).sort((a, b) => b[1] - a[1]);
+      const maxC = sortedCodes[0]?.[1] || 1;
+      document.getElementById('modal-abs-breakdown').innerHTML = sortedCodes.map(([code, count]) => {
+        const color = CODE_COLORS_MODAL[code] || '#64748b';
+        const label = CODE_LABELS_MODAL[code] || code;
+        const pct = Math.round((count / maxC) * 100);
+        const w = RISK_WEIGHT_MODAL[code] || 1;
+        return '<div class="abs-row">'
+          + '<div class="abs-code-label"><span class="abs-code-badge">' + code + '</span>'
+          + '<span style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;" title="' + label + '">' + label + '</span></div>'
+          + '<div class="abs-bar-wrap"><div class="abs-bar-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>'
+          + '<div class="abs-count" style="color:' + color + '">' + count + '</div>'
+          + '<div style="width:30px;text-align:right;font-size:9px;color:#475569;font-weight:600;">×' + w + '</div>'
+          + '</div>';
+      }).join('');
+
+      // Render Pattern Chart
+      renderModalPatternChart(e);
+
+      // HR Recommendations
+      const recs = generateHRRecommendations(e);
+
+      // Add Attendance Program card at the top if qualified
+      let programCard = '';
+      if (e.attendance_program_qualified) {
+        const isProactive = e.attendance_program_type === 'Proactive';
+        const cardTitle = isProactive ? '🎯 Proactive Enrollment — Attendance Management Support Program' : '🚨 Reactive Enrollment — Attendance Management Support Program';
+        const cardDesc = isProactive
+          ? 'This crew member qualifies for <strong>Proactive Enrollment</strong> (90-Day Rule only). Early intervention recommended before absence pattern becomes established. '
+          + 'Reason: <strong>' + e.attendance_program_reason + '</strong>.'
+          : 'This crew member qualifies for <strong>Reactive Enrollment</strong> (12-Month Rule triggered). Absence pattern is already established, requiring immediate formal intervention. '
+          + 'Reason: <strong>' + e.attendance_program_reason + '</strong>.';
+        const timingNote = isProactive
+          ? '<li><strong>Proactive approach:</strong> Intervene now to prevent reaching 12-month threshold (≥13 absences)</li>'
+          : '<strong>Reactive approach:</strong> Pattern already established — immediate formal intervention required</li>';
+
+        programCard = '<div class="hr-action-card support" style="animation-delay:0s">'
+          + '<div class="hr-action-title">' + cardTitle + '</div>'
+          + '<div class="hr-action-desc">' + cardDesc + '</div>'
+          + '<ul class="hr-action-steps">'
+          + '<li>Send formal enrollment letter outlining program requirements and support resources</li>'
+          + '<li>Schedule intake meeting within ' + (isProactive ? '5' : '2') + ' business days</li>'
+          + '<li>Assign a dedicated attendance coach/supervisor for regular check-ins</li>'
+          + '<li>Set 30-60-90 day review milestones with clear improvement targets</li>'
+          + '<li>Provide access to EAP, Occupational Health, and wellness resources</li>'
+          + timingNote
+          + '<li>Document all interactions in the attendance management file</li>'
+          + '</ul>'
+          + '</div>';
+      }
+
+      document.getElementById('modal-hr-actions').innerHTML = programCard + recs.map((r, idx) =>
+        '<div class="hr-action-card ' + r.cls + '" style="animation-delay:' + (e.attendance_program_qualified ? (idx + 1) * 0.06 : idx * 0.06) + 's">'
+        + '<div class="hr-action-title">' + r.icon + ' ' + r.title + '</div>'
+        + '<div class="hr-action-desc">' + r.desc + '</div>'
+        + (r.steps ? '<ul class="hr-action-steps">' + r.steps.map(s => '<li>' + s + '</li>').join('') + '</ul>' : '')
+        + '</div>'
+      ).join('');
+
+      // Open modal
+      const empModal = document.getElementById('empModal');
+      empModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeEmployeeModal() {
+      const empModal = document.getElementById('empModal');
+      empModal.classList.remove('open');
+      document.body.style.overflow = '';
+      currentModalEmployee = null;
+    }
+
+
+
+    document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeEmployeeModal(); });
+
+    // ──────────────────────────────────────────────────────────
+    // PATTERN ANALYSIS (REASONABLE DOUBT INDICATOR)
+    // ──────────────────────────────────────────────────────────
+    function updateModalPatternChart() {
+      if (currentModalEmployee) {
+        renderModalPatternChart(currentModalEmployee);
+      }
+    }
+
+    function renderModalPatternChart(e) {
+      if (modalPatternChart) modalPatternChart.destroy();
+
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      const sblPts = Array(12).fill(0);
+      const sckPts = Array(12).fill(0);
+      const otherPts = Array(12).fill(0);
+      let totalEvents = 0;
+
+      const evtKeys = Object.keys(e.monthly_events || {});
+      evtKeys.forEach(k => {
+        for (let i = 0; i < 12; i++) {
+          let val = e.monthly_events[k][i] || 0;
+          totalEvents += val;
+          if (k === 'SBL') { sblPts[i] += val; }
+          else if (k === 'SCK' || k === 'LSK') { sckPts[i] += val; }
+          else { otherPts[i] += val; }
+        }
+      });
+
+      // Combined dataset for aggregate anomaly detection
+      const dataPts = Array(12).fill(0).map((_, i) => sblPts[i] + sckPts[i] + otherPts[i]);
+      const sckTotal = totalEvents;
+
+      const bdayMonthStr = document.getElementById('modal-bday-month').value;
+      const bdayMonth = bdayMonthStr !== "" ? parseInt(bdayMonthStr) : null;
+      const targetEvent = document.getElementById('modal-event-select').value;
+
+      const avgMonthly = Math.max(1, sckTotal / 12);
+      const doubtFlag = document.getElementById('pattern-doubt-flag');
+      const spikeThreshold = avgMonthly * 1.5;
+
+      let reasons = [];
+
+      // Determine anomalies based on real data
+      if (sckTotal >= 3) {
+        if (bdayMonth !== null && dataPts[bdayMonth] >= spikeThreshold && dataPts[bdayMonth] > 1) {
+          reasons.push(`Excessive absences during Birthday month (${months[bdayMonth]})`);
+        }
+
+        if (targetEvent !== 'none') {
+          if (targetEvent === 'christmas' && dataPts[11] >= spikeThreshold && dataPts[11] > 1) reasons.push('Excessive absences aligning with Christmas/New Year');
+          if (targetEvent === 'easter' && (dataPts[2] >= spikeThreshold || dataPts[3] >= spikeThreshold) && Math.max(dataPts[2], dataPts[3]) > 1) reasons.push('Excessive absences aligning with Easter Weekend');
+          if (targetEvent === 'stampede' && dataPts[6] >= spikeThreshold && dataPts[6] > 1) reasons.push('Excessive absences aligning with Stampede/Summer peak');
+          if (targetEvent === 'thanksgiving' && dataPts[9] >= spikeThreshold && dataPts[9] > 1) reasons.push('Excessive absences aligning with Thanksgiving (Oct)');
+        }
+
+        // Automated default check if no specific entry point is set
+        if (bdayMonth === null && targetEvent === 'none') {
+          if (dataPts[11] >= spikeThreshold && dataPts[11] > 1) reasons.push('Excessive generic absence events during Christmas/Holidays');
+          if (dataPts[6] >= spikeThreshold && dataPts[6] > 1) reasons.push('Excessive generic absence events during Summer Peak/Events (e.g. Stampede)');
+          if (dataPts[2] >= spikeThreshold && dataPts[2] > 1) reasons.push('Excessive generic absence events around Spring Break');
+        }
+      }
+
+      // SBL Explicit Penalization
+      let sblFlagStr = '';
+      const sblTotal = sblPts.reduce((a, b) => a + b, 0);
+      if (sblTotal > 0) {
+        sblFlagStr = `<div style="margin-top:6px;padding:6px;background:rgba(220,38,38,0.2);border:1px solid #dc2626;border-radius:4px;color:#fca5a5;">🚨 <strong>Vacation Extension Pattern (SBL) Detected:</strong> ${sblTotal} Sick-Before-Leave event(s). Any presence of SBL strongly establishes <strong>Reasonable Doubt</strong>. Demanding immediate medical certificates for future absences is heavily justified under union regulations.</div>`;
+      }
+
+      if (reasons.length > 0 || sblTotal > 0) {
+        doubtFlag.style.display = 'block';
+        let text = '';
+        if (reasons.length > 0) {
+          text += '<strong>⚠️ Suspicious Pattern Detected:</strong> ' + reasons.join(' AND ') + '. ';
+          text += '<br>High probability of "Reasonable Doubt" standard met for medical certificate request.';
+        }
+        text += sblFlagStr;
+        doubtFlag.innerHTML = text;
+      } else {
+        doubtFlag.style.display = 'none';
+      }
+
+      const fleetAvg = Array(12).fill(Math.max(1, Math.round(sckTotal / 12 * 0.65)));
+
+      const ctx = document.getElementById('modalPatternChart').getContext('2d');
+      modalPatternChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Fleet Avg',
+              data: fleetAvg,
+              type: 'line',
+              borderColor: '#64748b',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              pointRadius: 0,
+              tension: 0.4,
+            },
+            {
+              label: 'Sick Before Leave (SBL)',
+              data: sblPts,
+              backgroundColor: '#dc2626', // Stark Red
+              borderColor: '#b91c1c',
+              borderWidth: 1,
+              borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 },
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Normal Sick (SCK/LSK)',
+              data: sckPts,
+              backgroundColor: 'rgba(59, 130, 246, 0.7)', // Blue
+              borderColor: '#3b82f6',
+              borderWidth: 1,
+              borderRadius: 0,
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Other Absences',
+              data: otherPts,
+              backgroundColor: 'rgba(100, 116, 139, 0.5)', // Slate
+              borderColor: '#64748b',
+              borderWidth: 1,
+              borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+              stack: 'Stack 0'
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, labels: { color: '#94a3b8', font: { size: 10 } } },
+            datalabels: { display: false }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#64748b', font: { size: 10 } }
+            },
+            y: {
+              stacked: true,
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#64748b', font: { size: 10 }, stepSize: 1, precision: 0 }
+            }
+          }
+        }
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // HR RECOMMENDATION ENGINE
+    // ──────────────────────────────────────────────────────────
+    function generateHRRecommendations(e) {
+      const recs = [];
+      const bev = (e.codes.BEV || 0) + (e.codes.BRU || 0);
+      const fat = e.codes.FAT || 0;
+      const nsp = e.codes.NSP || 0;
+      const laa = e.codes.LAA || 0;
+      const lsk = e.codes.LSK || 0;
+      const sbl = e.codes.SBL || 0;
+      const sck = e.codes.SCK || 0;
+      const cos = e.codes.COS || 0;
+      const uav = e.codes.UAV || 0;
+
+      // 1. NO SHOW ─────────────────────────────────────────────
+      if (nsp >= 3) {
+        recs.push({
+          cls: 'urgent', icon: '🚫',
+          title: 'DISCIPLINARY ACTION — Repeat No-Show Pairing (NSP×' + nsp + ')',
+          desc: '<strong>' + nsp + ' no-show pairing events</strong> is the most severe absence category. Unacceptable frequency — formal disciplinary process required immediately.',
+          steps: [
+            'Issue Step 2+ written warning per Attendance Management Policy',
+            'Schedule mandatory meeting with HR & direct supervisor within 5 business days',
+            'Implement 90-day Attendance Management Plan (AMP) with clear milestones',
+            'Any further NSP within AMP period → escalate to suspension / termination',
+            'Engage Labour Relations if unionized — document all steps meticulously'
+          ]
+        });
+      } else if (nsp > 0) {
+        recs.push({
+          cls: 'warning', icon: '⚠️',
+          title: 'Attendance Counseling — No-Show on Record (NSP×' + nsp + ')',
+          desc: '<strong>' + nsp + ' no-show pairing event' + (nsp > 1 ? 's' : '') + '</strong>. Formal counseling session required to communicate expectations and document the conversation.',
+          steps: [
+            'Conduct return-to-duty interview and document outcome',
+            'Issue verbal / Step 1 written notice per attendance policy',
+            'Monitor for 60 days — any recurrence triggers escalation'
+          ]
+        });
+      }
+
+      // 2. NOT MEETING STANDARDS ───────────────────────────────
+      if (cos > 0) {
+        recs.push({
+          cls: 'urgent', icon: '📋',
+          title: 'Performance Investigation — Not Meeting Company Standards (COS×' + cos + ')',
+          desc: '<strong>' + cos + ' COS event' + (cos > 1 ? 's' : '') + '</strong> may indicate conduct, performance, or compliance failures. Investigation required before any disciplinary decision.',
+          steps: [
+            'Initiate formal performance investigation with supporting documentation',
+            'Review incident reports and operations logs for each COS event',
+            'Engage Employee Relations / Labour Relations before issuing discipline',
+            'Progressive discipline: verbal → written → suspension → termination if pattern continues'
+          ]
+        });
+      }
+
+      // 3. LATE ARRIVALS ───────────────────────────────────────
+      if (laa >= 4) {
+        recs.push({
+          cls: 'warning', icon: '⏰',
+          title: 'Formal Attendance Management — Chronic Late Arrivals (LAA×' + laa + ')',
+          desc: '<strong>' + laa + ' late-for-shift events</strong> is a persistent pattern that triggers formal attendance management.',
+          steps: [
+            'Issue Step 1 or Step 2 written warning based on prior record',
+            'Implement Attendance Improvement Plan (AIP) with 90-day review',
+            'Discuss potential root causes: commute, scheduling, personal circumstances',
+            'Include EAP referral talking points if personal issues are mentioned'
+          ]
+        });
+      } else if (laa > 0) {
+        recs.push({
+          cls: 'caution', icon: '⏰',
+          title: 'Attendance Counseling — Late Arrivals on Record (LAA×' + laa + ')',
+          desc: '<strong>' + laa + ' late arrival' + (laa > 1 ? 's' : '') + '</strong>. Informal coaching before this pattern escalates.',
+          steps: [
+            'Arrange informal 1-on-1 with direct supervisor',
+            'Document discussion and set clear expectations',
+            'Flag for 30-day monitoring'
+          ]
+        });
+      }
+
+      // 4. LATE SICK CALL ──────────────────────────────────────
+      if (lsk >= 3) {
+        recs.push({
+          cls: 'warning', icon: '📞',
+          title: 'Late Sick Call Pattern — Formal Counseling Required (LSK×' + lsk + ')',
+          desc: '<strong>' + lsk + ' late sick calls</strong> represent repeated failure to follow call-out procedures, creating operational disruption.',
+          steps: [
+            'Remind employee of minimum notification window (typically 1–2 hrs before shift)',
+            'Issue written notice if procedural breaches confirmed',
+            'Monitor for 60 days — escalate if pattern continues'
+          ]
+        });
+      } else if (lsk > 0) {
+        recs.push({
+          cls: 'caution', icon: '📞',
+          title: 'Late Sick Call — Procedure Reminder (LSK×' + lsk + ')',
+          desc: '<strong>' + lsk + ' late sick call event' + (lsk > 1 ? 's' : '') + '</strong>. Ensure employee is aware of the notification requirements.',
+          steps: [
+            'Verbal reminder of call-out window and collective agreement obligations',
+            'Document as informal counseling'
+          ]
+        });
+      }
+
+      // 5. SICK BEFORE LEAVE ───────────────────────────────────
+      if (sbl >= 3) {
+        recs.push({
+          cls: 'caution', icon: '🗓️',
+          title: 'Sick-Before-Leave Pattern — Reasonable Doubt Met (SBL×' + sbl + ')',
+          desc: '<strong>' + sbl + ' Sick-Before-Leave events.</strong> Sick Before Leave (SBL) means that the employee took sick days just before their scheduled vacation or leave, usually to artificially make their vacations longer. This manipulation clearly establishes the <strong>"Reasonable Doubt"</strong> standard to bypass union the 5-day rule.',
+          steps: [
+            'Mandate a formal Medical Certificate for any future absences attached to scheduled leave',
+            'Present the documented SBL data pattern during their attendance review meeting',
+            'If health/stress barriers are claimed → refer to Occupational Health for verification',
+            'Document SBL pattern in the employee\'s official attendance file'
+          ]
+        });
+      } else if (sbl > 0) {
+        recs.push({
+          cls: 'info', icon: '🗓️',
+          title: 'Sick-Before-Leave — Monitor for Vacation Padding (SBL×' + sbl + ')',
+          desc: '<strong>' + sbl + ' SBL event' + (sbl > 1 ? 's' : '') + '.</strong> (SBL: taking sick days just before scheduled vacation to make vacations longer). Monitor closely.',
+          steps: ['Flag future SBL events. If the pattern repeats, union regulations will allow mandating medical certificates based on reasonable doubt.']
+        });
+      }
+
+      // 6. BEREAVEMENT — PSYCHOLOGICAL SUPPORT ────────────────
+      if (bev > 0) {
+        if (bev >= 3) {
+          recs.push({
+            cls: 'support', icon: '💜',
+            title: '🧠 Mental Health Intervention — Multiple Bereavement Events (BEV/BRU×' + bev + ')',
+            desc: '<strong>' + bev + ' bereavement events</strong> in a single year represents significant cumulative grief. This can cause depression, anxiety, PTSD, and complex grief — directly linked to elevated absenteeism. A proactive, compassionate intervention is critical.',
+            steps: [
+              '🤝 Initiate a warm (personal) referral to the Employee Assistance Program (EAP)',
+              '🧠 Coordinate with Occupational Health for a psychological wellness assessment',
+              '📅 Schedule a confidential, non-disciplinary check-in with HR',
+              '🗓️ Consider temporary scheduling accommodations to reduce operational stress',
+              '⚠️ Do NOT include bereavement events in punitive Bradford calculations',
+              '📚 Refer to WestJet\'s Mental Health in the Workplace resources',
+              '→ If employee appears at-risk: escalate to mental health first aid protocol'
+            ]
+          });
+        } else {
+          recs.push({
+            cls: 'support', icon: '💜',
+            title: 'Compassionate Support — Bereavement on Record (BEV/BRU×' + bev + ')',
+            desc: '<strong>' + bev + ' bereavement event' + (bev > 1 ? 's' : '') + '</strong>. While this is a protected entitlement, employees who have experienced a recent loss may benefit from additional support.',
+            steps: [
+              'Send a letter of condolence / compassionate outreach from their manager',
+              'Inform employee of EAP services and mental health resources',
+              'Ensure all bereavement leave entitlements have been correctly applied',
+              'Schedule an informal wellness check-in at return to duty'
+            ]
+          });
+        }
+      }
+
+      // 7. FATIGUE — SAFETY CRITICAL ───────────────────────────
+      if (fat >= 3) {
+        recs.push({
+          cls: 'warning', icon: '😴',
+          title: '⚠️ Fatigue Risk Assessment — Immediate Action Required (FAT×' + fat + ')',
+          desc: '<strong>' + fat + ' fatigue events</strong> in aviation crew is a serious safety concern with regulatory implications under Transport Canada\'s FRMS requirements.',
+          steps: [
+            '🚨 Flag for immediate FRMS (Fatigue Risk Management System) review',
+            'Refer to Occupational Health for fatigue and fitness-for-duty assessment',
+            'Audit recent duty/rest records — verify compliance with CARs & CBA rest minimums',
+            'Consider temporary scheduling revision pending health clearance',
+            '⛔ Do NOT roster on long-haul or safety-critical pairings until assessment complete',
+            'Document in crew safety management database (SMS)'
+          ]
+        });
+      } else if (fat > 0) {
+        recs.push({
+          cls: 'caution', icon: '😴',
+          title: 'Fatigue Noted — Review Duty Patterns (FAT×' + fat + ')',
+          desc: '<strong>' + fat + ' fatigue event' + (fat > 1 ? 's' : '') + '</strong>. Review scheduling for contributing factors before this becomes a safety risk.',
+          steps: [
+            'Review recent duty periods for rest requirement compliance',
+            'Monitor for recurrence — escalate to FRMS review if pattern develops'
+          ]
+        });
+      }
+
+      // 8. CHRONIC SICK PATTERN ────────────────────────────────
+      if (sck >= 15) {
+        recs.push({
+          cls: 'info', icon: '🏥',
+          title: 'Occupational Health Referral — Chronic Sick Pattern (SCK×' + sck + ')',
+          desc: '<strong>' + sck + ' sick events</strong> may indicate an underlying medical condition not being appropriately managed. An occupational health pathway supports both the employee and the organization.',
+          steps: [
+            'Initiate Occupational Health referral (voluntary preferred; mandatory if policy triggers)',
+            'Conduct Return-to-Work (RTW) interviews to identify barriers to attendance',
+            'Explore reasonable workplace accommodations if a health condition is disclosed',
+            'Ensure STD/LTD entitlements are properly communicated and applied if applicable',
+            'Review with Benefits team — may qualify for disease management program'
+          ]
+        });
+      } else if (sck >= 7) {
+        recs.push({
+          cls: 'info', icon: '🏥',
+          title: 'Health Support — Elevated Sick Absences (SCK×' + sck + ')',
+          desc: '<strong>' + sck + ' sick events</strong>. Proactive engagement can identify health barriers early and prevent long-term absence.',
+          steps: [
+            'Conduct informal wellness check-in conversation',
+            'Remind employee of EAP, benefits coverage, and Occupational Health services',
+            'Monitor trend — refer to Occupational Health if pattern continues next quarter'
+          ]
+        });
+      }
+
+      // 9. UNAVAILABLE TO WORK ─────────────────────────────────
+      if (uav >= 3) {
+        recs.push({
+          cls: 'caution', icon: '🔒',
+          title: 'Availability Review — Repeated Unavailable Events (UAV×' + uav + ')',
+          desc: '<strong>' + uav + ' Unavailable-to-Work events</strong>. The UAV code covers multiple scenarios — accurate classification is critical before any action.',
+          steps: [
+            'Review event logs/notes to classify cause: medical, personal, or operational',
+            'Engage employee in an informal discussion to understand underlying drivers',
+            'If personal/scheduling: explore accommodation or scheduling options',
+            'If behavioural without justification: document and begin formal attendance monitoring'
+          ]
+        });
+      }
+
+      // 10. SENIORITY RISK FLAG ────────────────────────────────
+      if (e.emp_num < 10000 && e.risk_score >= 80) {
+        recs.push({
+          cls: 'info', icon: '⭐',
+          title: 'Seniority Risk Flag — Senior Crew Member (Emp #' + e.emp_num + ')',
+          desc: 'This is a <strong>very senior employee</strong> with significant institutional knowledge and likely strong union protection. All HR actions carry elevated legal, operational, and morale risk.',
+          steps: [
+            'Engage Labour Relations Lead BEFORE any formal disciplinary step',
+            'Ensure employee\'s right to union representation is clearly communicated',
+            'Document all interactions — senior employees frequently challenge decisions',
+            'Consider retention-focused interventions, EAP, and wellness support first',
+            'Assess operational impact of potential separation before proceeding'
+          ]
+        });
+      }
+
+      // 11. BRADFORD THRESHOLD ─────────────────────────────────
+      if (e.bradford >= 900) {
+        recs.push({
+          cls: 'urgent', icon: '📊',
+          title: 'Bradford Factor — Formal Investigation Threshold Exceeded (' + e.bradford.toLocaleString() + ')',
+          desc: 'Bradford score of <strong>' + e.bradford.toLocaleString() + '</strong> exceeds the 900-point formal action threshold commonly used in airline attendance policies. This score alone may justify a formal HR process.',
+          steps: [
+            'Convene a formal Bradford review under the Attendance Management Policy',
+            'Present Bradford analysis with full event breakdown at any disciplinary hearing',
+            'Offer employee the opportunity to present mitigating circumstances',
+            'Bereavement and medical events should be documented as context — not removed from the calculation without policy basis'
+          ]
+        });
+      } else if (e.bradford >= 200) {
+        recs.push({
+          cls: 'caution', icon: '📊',
+          title: 'Bradford Factor — Caution Zone (' + e.bradford.toLocaleString() + ')',
+          desc: 'Bradford score of <strong>' + e.bradford.toLocaleString() + '</strong> is approaching the formal action threshold (900). Intervention now can prevent escalation.',
+          steps: [
+            'Discuss Bradford score during next supervisory check-in',
+            'Set an attendance improvement target for the next 90 days',
+            'Schedule a Bradford review at end of quarter'
+          ]
+        });
+      }
+
+      // Fallback
+      if (recs.length === 0) {
+        recs.push({
+          cls: 'green', icon: '✅',
+          title: 'No Immediate HR Action Required',
+          desc: 'This employee\'s absence profile does not currently trigger any formal HR action thresholds. Continue routine monitoring.',
+          steps: ['Review at next scheduled performance cycle']
+        });
+      }
+
+      return recs;
+    }
+
+    function generateSupervisorRecommendations(s) {
+      const recs = [];
+      const sblPct = s.total_absences ? (s.team_sbl_total / s.total_absences) * 100 : 0;
+      const nspPct = s.total_absences ? (s.team_nsp_total / s.total_absences) * 100 : 0;
+      const avgAbsPerReport = s.total_absences / s.total_reports;
+
+      // 1. Operational Impact & Core Oversight
+      if (s.tier === 'critical' || s.tier === 'high') {
+        recs.push({
+          cls: 'critical',
+          icon: '🚨',
+          title: 'Immediate Oversight Intervention',
+          desc: 'This supervisor\'s team shows a critical deviation from fleet attendance benchmarks. Immediate management-of-manager (MoM) intervention is required to stabilize operations.',
+          steps: [
+            'Schedule a 1:1 meeting with Supervisor within 24 hours to review oversight score (' + s.sup_risk_score.toFixed(1) + ')',
+            'Conduct a deep-dive audit of all ' + s.critical_count + ' critical-risk reports',
+            'Validate that the Supervisor has followed up on all "Reasonable Doubt" pattern flags'
+          ]
+        });
+      }
+
+      // 2. Behavioral / Cultural Risk (SBL/NSP)
+      if (sblPct > 15 || nspPct > 10) {
+        recs.push({
+          cls: 'high',
+          icon: '⚖️',
+          title: 'Labour Relations (LR) Strategic Audit',
+          desc: 'High concentration of ' + (sblPct > 15 ? 'Sick Before Leave (SBL)' : 'No Show (NSP)') + ' suggests a breakdown in team discipline or potential vacation padding patterns.',
+          steps: [
+            'Collaborate with LR to audit pairing schedules vs. sick calls for this base',
+            'Reinforce the "Shared Responsibility" clause of the Inflight Attendance Management Support Program',
+            'Implement mandatory medical certificate requests for any future SBL-pattern calls from this team'
+          ]
+        });
+      }
+
+      // 3. Program Enrollment Strategy
+      if (s.program_qualified_pct > 25) {
+        recs.push({
+          cls: 'medium',
+          icon: '🎯',
+          title: 'Proactive Support Program Scaling',
+          desc: s.program_qualified_pct.toFixed(0) + '% of this team is qualified for enrollment. This requires a coordinated support strategy rather than individual ad-hoc management.',
+          steps: [
+            'Batch-process Enrollment Letters for all qualified candidates',
+            'Assign an Attendance Coach to the team to assist the Supervisor with intake meetings',
+            'Review EAP and Wellness resource utilization for this specific group'
+          ]
+        });
+      }
+
+      // 4. Team Wellness / Benchmark Deviation
+      if (avgAbsPerReport > 5) {
+        recs.push({
+          cls: 'support',
+          icon: '🏥',
+          title: 'Occupational Health & Wellness Review',
+          desc: 'Average absences per report (' + avgAbsPerReport.toFixed(1) + ') exceeds the stable operational threshold. Investigate systemic fatigue or environmental factors at this base.',
+          steps: [
+            'Review pairing fatigue scores for recent schedules assigned to this team',
+            'Check for correlation between base health and specific flight routes',
+            'Offer voluntary wellness check-ins for reports with rising Bradford scores'
+          ]
+        });
+      }
+
+      if (recs.length === 0) {
+        recs.push({
+          cls: 'support',
+          icon: '✅',
+          title: 'Maintenance of Standard Practices',
+          desc: 'Team is operating within established reliability benchmarks.',
+          steps: [
+            'Continue bi-weekly attendance oversight reviews',
+            'Recognize the Supervisor for maintaining a low-risk oversight score'
+          ]
+        });
+      }
+
+      return recs;
+    }
+
+    let bdDistChart, bdPieChart;
+
+    function updateBradfordDeviation() {
+      const emps = ALL_DATA.employees;
+      const total = emps.length;
+
+      const bradfords = emps.map(e => e.bradford);
+      const mean = bradfords.reduce((s, v) => s + v, 0) / total;
+      const deviation3 = mean * 0.03;
+      const lowerBand = mean - deviation3;
+      const upperBand = mean + deviation3;
+
+      const outliers = emps.filter(e => e.bradford < lowerBand || e.bradford > upperBand);
+      const aboveMean = outliers.filter(e => e.bradford > upperBand);
+      const belowMean = outliers.filter(e => e.bradford < lowerBand);
+      const outlierPct = total ? (outliers.length / total * 100).toFixed(1) : 0;
+
+      document.getElementById('bd-total-emp').textContent = fmt(total);
+      document.getElementById('bd-mean').textContent = fmt(Math.round(mean));
+      document.getElementById('bd-outliers').textContent = fmt(outliers.length);
+      document.getElementById('bd-outlier-pct').textContent = outlierPct + '%';
+      document.getElementById('bd-mean-label').textContent = fmt(Math.round(mean));
+      document.getElementById('bd-band-label').textContent = fmt(Math.round(lowerBand)) + ' – ' + fmt(Math.round(upperBand));
+
+      outliers.sort((a, b) => Math.abs(b.bradford - mean) - Math.abs(a.bradford - mean));
+
+      renderBdDistChart(bradfords, mean, lowerBand, upperBand);
+      renderBdPieChart(aboveMean.length, belowMean.length, total - outliers.length);
+      renderBdTable(outliers, mean);
+    }
+
+    function renderBdDistChart(bradfords, mean, lower, upper) {
+      const ctx = document.getElementById('bdDistChart').getContext('2d');
+      if (bdDistChart) bdDistChart.destroy();
+
+      const maxB = Math.max(...bradfords);
+      const numBins = 50;
+      const binSize = maxB / numBins;
+      const bins = new Array(numBins).fill(0);
+      bradfords.forEach(b => {
+        const idx = Math.min(Math.floor(b / binSize), numBins - 1);
+        bins[idx]++;
+      });
+
+      const labels = bins.map((_, i) => Math.round(i * binSize));
+      const borderColors = labels.map(v => {
+        if (v < lower || v > upper) return '#ef4444';
+        if (v < lower * 1.1 || v > upper * 0.9) return '#f59e0b';
+        return '#3b82f6';
+      });
+      const bgColors = borderColors.map(c => c + '40');
+
+      bdDistChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels.map(l => l.toLocaleString()),
+          datasets: [{
+            label: 'Employees',
+            data: bins,
+            backgroundColor: bgColors,
+            borderColor: borderColors,
+            borderWidth: 1,
+            borderRadius: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => 'Bradford Range: ' + items[0].label + ' – ' + (parseInt(items[0].label.replace(/,/g, '')) + Math.round(binSize)).toLocaleString(),
+                label: (item) => item.value + ' employees'
+              }
+            },
+            annotation: undefined
+          },
+          scales: {
+            x: {
+              ticks: { maxTicksLimit: 10, color: '#64748b', font: { size: 10 }, maxRotation: 45 },
+              grid: { color: 'rgba(255,255,255,0.04)' }
+            },
+            y: {
+              ticks: { color: '#64748b', font: { size: 10 } },
+              grid: { color: 'rgba(255,255,255,0.04)' }
+            }
+          }
+        },
+        plugins: [{
+          id: 'deviationLines',
+          afterDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            const xScale = scales.x;
+            const yScale = scales.y;
+
+            [
+              { value: lower, color: '#f59e0b', label: 'Mean −3%' },
+              { value: mean, color: '#3b82f6', label: 'Mean' },
+              { value: upper, color: '#f59e0b', label: 'Mean +3%' }
+            ].forEach(line => {
+              const x = xScale.getPixelForValue(line.value);
+              if (x >= chartArea.left && x <= chartArea.right) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = line.color;
+                ctx.lineWidth = 2;
+                ctx.moveTo(x, chartArea.top);
+                ctx.lineTo(x, chartArea.bottom);
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.save();
+                ctx.fillStyle = line.color;
+                ctx.font = '600 10px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(line.label, x, chartArea.top - 4);
+                ctx.restore();
+              }
+            });
+          }
+        }]
+      });
+    }
+
+    function renderBdPieChart(above, below, normal) {
+      const ctx = document.getElementById('bdPieChart').getContext('2d');
+      if (bdPieChart) bdPieChart.destroy();
+
+      bdPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Above Mean (>3%)', 'Below Mean (<3%)', 'Within Normal Band'],
+          datasets: [{
+            data: [above, below, normal],
+            backgroundColor: ['#ef444480', '#06b6d480', '#3b82f680'],
+            borderColor: ['#ef4444', '#06b6d4', '#3b82f6'],
+            borderWidth: 2,
+            hoverOffset: 8
+          }]
+        },
+        plugins: [ChartDataLabels],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '60%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#f1f5f9', font: { size: 11 }, padding: 16, usePointStyle: true }
+            },
+            tooltip: {
+              callbacks: {
+                label: (item) => item.label + ': ' + item.parsed + ' (' + (item.parsed / (above + below + normal) * 100).toFixed(1) + '%)'
+              }
+            },
+            datalabels: {
+              color: '#f1f5f9',
+              font: { weight: '700', size: 12 },
+              formatter: (value) => value > 0 ? value : ''
+            }
+          }
+        }
+      });
+    }
+
+    function renderBdTable(outliers, mean) {
+      const tbody = document.getElementById('bdTableBody');
+      if (outliers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted);">No outliers detected — all employees within 3% deviation band</td></tr>';
+        return;
+      }
+
+      let html = '';
+      outliers.forEach((e, i) => {
+        const deviation = ((e.bradford - mean) / mean * 100).toFixed(1);
+        const isAbove = e.bradford > mean;
+        const tier = riskTier(e.risk_score);
+        const tierColors = { critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#10b981' };
+
+        html += '<tr style="cursor:pointer;" onclick="openEmployeeModal(' + e.emp + ')">';
+        html += '<td>' + (i + 1) + '</td>';
+        html += '<td>' + e.emp_num + '</td>';
+        html += '<td>' + e.base + '</td>';
+        html += '<td>' + e.position + '</td>';
+        html += '<td style="font-weight:700;">' + fmt(e.bradford) + '</td>';
+        html += '<td style="color:' + (Math.abs(deviation) > 10 ? '#ef4444' : Math.abs(deviation) > 5 ? '#f59e0b' : '#f1f5f9') + ';font-weight:700;">' + deviation + '%</td>';
+        html += '<td>' + (isAbove
+          ? '<span style="color:#ef4444;font-weight:600;">▲ Above</span>'
+          : '<span style="color:#06b6d4;font-weight:600;">▼ Below</span>') + '</td>';
+        html += '<td>' + e.total_absences + '</td>';
+        html += '<td>' + e.risk_score + '</td>';
+        html += '<td><span class="risk-badge ' + tier.cls + '">' + tier.label + '</span></td>';
+        html += '</tr>';
+      });
+
+      tbody.innerHTML = html;
+    }
+    // ============================================================
+    // ============================================================
+    // SUPERVISOR VIEW
+    // ============================================================
+
+
+    function renderSupRiskChart() {
+      if (supRiskChart) supRiskChart.destroy();
+      const sups = ALL_SUPERVISOR_DATA.slice().sort((a, b) => b.sup_risk_score - a.sup_risk_score).slice(0, 15);
+      const labels = sups.map(s => s.sup_emp_num);
+      const scores = sups.map(s => s.sup_risk_score);
+      const colors = sups.map(s => {
+        if (s.tier === 'critical') return 'rgba(239,68,68,0.7)';
+        if (s.tier === 'high') return 'rgba(249,115,22,0.7)';
+        if (s.tier === 'medium') return 'rgba(245,158,11,0.7)';
+        return 'rgba(16,185,129,0.7)';
+      });
+      const ctx = document.getElementById('supRiskChart').getContext('2d');
+      supRiskChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Oversight Score', data: scores, backgroundColor: colors, borderWidth: 1 }] },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } } }
+        }
+      });
+
+    }
+
+    function renderSupProgramChart() {
+      if (supProgramChart) supProgramChart.destroy();
+      const emps = ALL_DATA.employees;
+      const ftQual = emps.filter(e => e.is_fulltime && e.attendance_program_qualified).length;
+      const ftNot = emps.filter(e => e.is_fulltime && !e.attendance_program_qualified).length;
+      const ptQual = emps.filter(e => !e.is_fulltime && e.attendance_program_qualified).length;
+      const ptNot = emps.filter(e => !e.is_fulltime && !e.attendance_program_qualified).length;
+      const ctx = document.getElementById('supProgramChart').getContext('2d');
+      supProgramChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['FT Qualified', 'FT Not Qualified', 'PT Qualified', 'PT Not Qualified'],
+          datasets: [{ data: [ftQual, ftNot, ptQual, ptNot], backgroundColor: ['rgba(236,72,153,0.8)', 'rgba(100,116,139,0.5)', 'rgba(16,185,129,0.8)', 'rgba(100,116,139,0.3)'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } } }
+      });
+    }
+
+    function renderSupervisorView() {
+      if (!ALL_SUPERVISOR_DATA) buildSupervisorData();
+      if (!ALL_SUPERVISOR_DATA) return;
+
+      const sups = ALL_SUPERVISOR_DATA;
+
+      // KPIs
+      const totalSups = sups.length;
+      const criticalTeams = sups.filter(s => s.sup_risk_score >= 150).length;
+      const avgAbsences = sups.length ? (sups.reduce((sum, s) => sum + s.total_absences, 0) / sups.length).toFixed(1) : 0;
+      const totalQualified = sups.reduce((sum, s) => sum + s.program_qualified_count, 0);
+      const totalSBL = sups.reduce((sum, s) => sum + s.team_sbl_total, 0);
+      const avgOversight = sups.length ? (sups.reduce((sum, s) => sum + s.sup_risk_score, 0) / sups.length).toFixed(1) : 0;
+
+      document.getElementById('sup-total-sups').textContent = totalSups;
+      document.getElementById('sup-critical-teams').textContent = criticalTeams;
+      document.getElementById('sup-avg-absences').textContent = avgAbsences;
+      document.getElementById('sup-total-qualified').textContent = totalQualified;
+      document.getElementById('sup-total-sbl').textContent = totalSBL;
+      document.getElementById('sup-avg-oversight').textContent = avgOversight;
+
+      renderSupRiskChart();
+      renderSupProgramChart();
+      renderSupTable();
+    }
+
+
+
+
+
+    let supSortCol = 'sup_risk_score';
+    let supSortDir = -1;
+    function sortSupTable(col) {
+      supSortCol = col;
+      supSortDir *= -1;
+      renderSupTable();
+    }
+
+    function renderSupTable() {
+      const tbody = document.getElementById('supTableBody');
+      if (!ALL_SUPERVISOR_DATA) return;
+
+      let arr = [...ALL_SUPERVISOR_DATA];
+      arr.sort((a, b) => supSortDir * ((a[supSortCol] || 0) > (b[supSortCol] || 0) ? 1 : -1));
+
+      const tierMap = { critical: ['risk-badge risk-crit', 'Critical'], high: ['risk-badge risk-high', 'High'], medium: ['risk-badge risk-med', 'Medium'], low: ['risk-badge risk-low', 'Low'] };
+
+      let html = '';
+      arr.forEach(s => {
+        const tier = tierMap[s.tier] || tierMap['low'];
+        html += '<tr onclick="openSupervisorModal(' + s.sup_emp_num + ')">';
+        html += '<td>' + s.sup_emp_num + '</td>';
+        html += '<td>' + s.sup_base + '</td>';
+        html += '<td>' + s.total_reports + '</td>';
+        html += '<td>' + s.avg_risk_score.toFixed(1) + '</td>';
+        html += '<td>' + s.sup_risk_score.toFixed(1) + '</td>';
+        html += '<td>' + s.critical_count + '</td>';
+        html += '<td>' + s.high_count + '</td>';
+        html += '<td>' + s.program_qualified_pct.toFixed(1) + '%</td>';
+        html += '<td>' + s.team_sbl_total + '</td>';
+        html += '<td><span style="color:var(--accent);cursor:pointer;" onclick="event.stopPropagation();openEmployeeModal(' + s.worst_employee_emp + ')">' + s.worst_employee_emp + '</span></td>';
+        html += '<td><span class="' + tier[0] + '">' + tier[1] + '</span></td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filterBySupervisor(supNum) {
+      switchView('operational');
+      document.getElementById('tableSearch').value = supNum;
+      filterTable();
+    }
+
+
+    let ALL_SUPERVISOR_DATA = null;
+
+    function buildSupervisorData() {
+      if (!ALL_DATA || !ALL_DATA.employees) return;
+
+      const supMap = {};
+      ALL_DATA.employees.forEach(e => {
+        const sup = e.sup_emp_num || 'Unknown';
+        if (!supMap[sup]) {
+          supMap[sup] = {
+            sup_emp_num: sup,
+            sup_base: e.sup_base || 'Unknown',
+            total_reports: 0,
+            total_absences: 0,
+            sum_risk_score: 0,
+            sum_combined_score: 0,
+            sum_bradford: 0,
+            critical_count: 0,
+            high_count: 0,
+            medium_count: 0,
+            low_count: 0,
+            program_qualified_count: 0,
+            team_nsp_total: 0,
+            team_sbl_total: 0,
+            monthly_absences: Array(12).fill(0),
+            reports: []
+          };
+        }
+        const s = supMap[sup];
+        s.total_reports++;
+        s.total_absences += e.total_absences || 0;
+        s.sum_risk_score += e.risk_score || 0;
+        s.sum_combined_score += e.combined_score || 0;
+        s.sum_bradford += e.bradford || 0;
+
+        if (e.combined_score >= 150) s.critical_count++;
+        else if (e.combined_score >= 100) s.high_count++;
+        else if (e.combined_score >= 50) s.medium_count++;
+        else s.low_count++;
+
+        if (e.attendance_program_qualified) s.program_qualified_count++;
+        s.team_nsp_total += (e.nsp || 0);
+        s.team_sbl_total += (e.sbl || 0);
+
+        // Sum monthly_sck_events
+        if (e.monthly_sck_events && Array.isArray(e.monthly_sck_events)) {
+          for (let i = 0; i < 12; i++) {
+            s.monthly_absences[i] += e.monthly_sck_events[i] || 0;
+          }
+        }
+        s.reports.push(e);
+      });
+
+      // Convert to array and compute averages and sup_risk_score
+      ALL_SUPERVISOR_DATA = Object.values(supMap).map(s => {
+        s.avg_risk_score = s.total_reports ? s.sum_risk_score / s.total_reports : 0;
+        s.avg_combined_score = s.total_reports ? s.sum_combined_score / s.total_reports : 0;
+        s.avg_bradford = s.total_reports ? s.sum_bradford / s.total_reports : 0;
+        s.program_qualified_pct = s.total_reports ? (s.program_qualified_count / s.total_reports) * 100 : 0;
+
+        // Find worst employee
+        if (s.reports.length > 0) {
+          const worst = s.reports.reduce((max, e) => e.combined_score > max.combined_score ? e : max);
+          s.worst_employee_emp = worst.emp_num;
+          s.worst_employee_score = worst.combined_score;
+        }
+
+        // Compute sup_risk_score
+        s.sup_risk_score = (s.avg_combined_score * 0.5) + (s.program_qualified_pct * 2) + (s.critical_count * 5) + (s.team_sbl_total * 3);
+
+        // Determine tier
+        if (s.sup_risk_score >= 150) s.tier = 'critical';
+        else if (s.sup_risk_score >= 100) s.tier = 'high';
+        else if (s.sup_risk_score >= 50) s.tier = 'medium';
+        else s.tier = 'low';
+
+        return s;
+      });
+
+      console.log('Built supervisor data:', ALL_SUPERVISOR_DATA.length, 'supervisors');
+
+      // Verify reports arrays
+      if (ALL_SUPERVISOR_DATA.length > 0) {
+        const sample = ALL_SUPERVISOR_DATA[0];
+        console.log('Sample supervisor:', sample.sup_emp_num, 'has', sample.reports ? sample.reports.length : 0, 'reports');
+        if (sample.reports && sample.reports.length > 0) {
+          console.log('First report sample:', sample.reports[0].emp_num, sample.reports[0].combined_score);
+        }
+      }
+    }
+
+    // INITIALIZATION
+    // ============================================================
+    fetch('dashboard_data.json?v=' + new Date().getTime())
+      .then(r => r.json())
+      .then(data => {
+        ALL_DATA = data;
+        init();
+        buildSupervisorData();
+      })
+      .catch(err => {
+        document.body.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:Inter,sans-serif;"><h2>⚠️ Could not load dashboard_data.json</h2><p style="color:#64748b;margin-top:8px;">Make sure this file is in the same directory as dashboard.html and serve via a local server.</p><pre style="margin-top:16px;font-size:12px;color:#475569;">' + err + '</pre></div>';
+      });
+
+    let currentModalSupervisor = null;
+
+    function openSupervisorModal(supEmpNum) {
+      const s = ALL_SUPERVISOR_DATA.find(x => x.sup_emp_num == supEmpNum);
+      if (!s) {
+
+        return;
+      }
+      currentModalSupervisor = s;
+
+      document.getElementById('supModal-title').textContent = 'Supervisor #' + s.sup_emp_num;
+      document.getElementById('supModal-subtitle').textContent = s.sup_base + ' · ' + s.total_reports + ' Direct Reports';
+
+      const tierMap = { critical: ['#ef4444', 'Critical'], high: ['#f97316', 'High'], medium: ['#f59e0b', 'Medium'], low: ['#10b981', 'Low'] };
+      const tier = tierMap[s.tier] || tierMap['low'];
+      document.getElementById('supModal-badge').innerHTML = '<span class="risk-badge ' + s.tier + '">' + tier[1] + '</span> <span style="color:#64748b;font-size:12px;margin-left:8px;">Oversight Score: ' + s.sup_risk_score.toFixed(1) + '</span>';
+
+      document.getElementById('supModal-avgRisk').textContent = s.avg_risk_score.toFixed(1);
+      document.getElementById('supModal-qualPct').textContent = s.program_qualified_pct.toFixed(1) + '%';
+      document.getElementById('supModal-totalAbs').textContent = s.total_absences;
+      document.getElementById('supModal-avgBrad').textContent = s.avg_bradford.toFixed(0);
+      document.getElementById('supModal-nsp').textContent = s.team_nsp_total;
+      document.getElementById('supModal-sbl').textContent = s.team_sbl_total;
+
+      // HR Recommendations
+      const supRecs = generateSupervisorRecommendations(s);
+      document.getElementById('supModal-recommendations').innerHTML = supRecs.map((r, idx) =>
+        '<div class="hr-action-card ' + r.cls + '" style="animation-delay:' + (idx * 0.06) + 's">'
+        + '<div class="hr-action-title">' + r.icon + ' ' + r.title + '</div>'
+        + '<div class="hr-action-desc">' + r.desc + '</div>'
+        + (r.steps ? '<ul class="hr-action-steps">' + r.steps.map(step => '<li>' + step + '</li>').join('') + '</ul>' : '')
+        + '</div>'
+      ).join('');
+
+      // Risk tier breakdown
+      document.getElementById('supModal-critical').textContent = s.critical_count;
+      document.getElementById('supModal-high').textContent = s.high_count;
+      document.getElementById('supModal-medium').textContent = s.medium_count;
+      document.getElementById('supModal-low').textContent = s.low_count;
+
+      // Monthly trend chart
+      if (typeof supModalMonthlyChart !== 'undefined' && supModalMonthlyChart) supModalMonthlyChart.destroy();
+      const ctx = document.getElementById('supModalMonthlyChart').getContext('2d');
+      supModalMonthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+          datasets: [{ label: 'Team Absences', data: s.monthly_absences, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } } }
+        }
+      });
+
+      // Absence breakdown
+      const absenceTypes = {};
+      s.reports.forEach(e => {
+        if (e.codes) {
+          Object.keys(e.codes).forEach(code => {
+            absenceTypes[code] = (absenceTypes[code] || 0) + e.codes[code];
+          });
+        }
+      });
+      const sortedTypes = Object.entries(absenceTypes).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      let breakdownHtml = '';
+      sortedTypes.forEach(([code, count]) => {
+        const pct = s.total_absences ? Math.round(count / s.total_absences * 100) : 0;
+        breakdownHtml += '<div style="background:var(--bg-card2);padding:8px 12px;border-radius:6px;font-size:12px;"><span style="color:var(--accent);font-weight:600;">' + code + '</span> <span style="color:var(--muted);">(' + count + ' · ' + pct + '%)</span></div>';
+      });
+      document.getElementById('supModal-absence-breakdown').innerHTML = breakdownHtml;
+
+      // Seniority info
+      const sortedByEmpNum = s.reports.slice().sort((a, b) => a.emp_num - b.emp_num);
+      const mostSenior = sortedByEmpNum[0];
+      const mostJunior = sortedByEmpNum[sortedByEmpNum.length - 1];
+      const avgEmpNum = s.reports.reduce((sum, e) => sum + e.emp_num, 0) / s.total_reports;
+      let seniorityHtml = '';
+      seniorityHtml += '<div style="margin-bottom:8px;"><span style="color:var(--muted);">Most Senior:</span> #' + mostSenior.emp_num + ' (' + mostSenior.base + ' · ' + mostSenior.position + ')</div>';
+      seniorityHtml += '<div style="margin-bottom:8px;"><span style="color:var(--muted);">Most Junior:</span> #' + mostJunior.emp_num + ' (' + mostJunior.base + ' · ' + mostJunior.position + ')</div>';
+      //seniorityHtml += '<div><span style="color:var(--muted);">Avg Seniority (emp #):</span> ' + Math.round(avgEmpNum) + '</div>';
+      document.getElementById('supModal-seniority').innerHTML = seniorityHtml;
+
+      // Direct reports table with seniority column
+      try {
+        const tbody = document.getElementById('supModalReportsBody');
+        if (!tbody) {
+          return;
+        }
+        if (!s.reports || !Array.isArray(s.reports)) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">No direct reports data available</td></tr>';
+          return;
+        }
+        const reports = s.reports.slice().sort((a, b) => b.combined_score - a.combined_score);
+        let html = '';
+        reports.forEach(e => {
+          if (!e || typeof e !== 'object') return;
+          const progStatus = e.attendance_program_qualified ? '<span style="color:#ec4899;">Qualified</span>' : '<span style="color:#64748b;">Not Qualified</span>';
+          let seniorityLabel = e.emp_num < 5000 ? 'Very Senior' : e.emp_num < 15000 ? 'Senior' : e.emp_num < 30000 ? 'Mid' : 'Junior';
+          html += '<tr onclick="openEmployeeModal(' + (e.emp || e.emp_num) + ')" style="cursor:pointer;">';
+          html += '<td>' + (e.emp_num || 'N/A') + '</td>';
+          html += '<td>' + (e.base || 'N/A') + '</td>';
+          html += '<td>' + (e.position || 'N/A') + '</td>';
+          html += '<td>' + (e.combined_score ? e.combined_score.toFixed(1) : '0.0') + '</td>';
+          html += '<td>' + progStatus + '</td>';
+          html += '<td><span style="color:var(--muted);font-size:11px;">' + seniorityLabel + '</span></td>';
+          html += '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (err) {
+      }
+
+      // Open modal using direct style
+      const supModal = document.getElementById('supModal');
+      supModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      const supPanel = supModal.querySelector('.modal-panel');
+
+      // Scroll to show Direct Reports table
+      setTimeout(() => {
+        const modalBody = supModal.querySelector('.modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = modalBody.scrollHeight;
+        }
+      }, 300);
+    }
+
+    function closeSupervisorModal() {
+      const supModal = document.getElementById('supModal');
+      supModal.classList.remove('open');
+      document.body.style.overflow = '';
+      currentModalSupervisor = null;
+    }
+  </script>
+
+  <!-- ============ MACRO LOSS SNAPSHOT VIEW ============ -->
+  <div id="macro-view" class="main" style="display:none;">
+    <!-- MACRO KPI ROW -->
+    <div class="kpi-row" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Estimated Financial Loss</div>
+        <div class="kpi-value" id="kpi-loss-financial">—</div>
+        <div class="kpi-sub">POC Model: $450 base, $600 SBL</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Lost Productivity Output</div>
+        <div class="kpi-value" id="kpi-loss-hours">—</div>
+        <div class="kpi-sub">Total absence events × 8 hours</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">SBL & Vacation Padding Drain</div>
+        <div class="kpi-value" style="color:var(--red);" id="kpi-loss-sbl">—</div>
+        <div class="kpi-sub">Targeted direct loss from Sick Before Leave</div>
+      </div>
+    </div>
+
+    <!-- MACRO CHARTS ROW -->
+    <div style="display:grid;grid-template-columns: 2fr 1fr;gap:24px;">
+      <!-- Monthly Financial Run-Rate -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Estimated Loss Monthly Run-Rate</div>
+        </div>
+        <div style="position:relative;height:260px;">
+          <canvas id="macroRunRateChart"></canvas>
+        </div>
+      </div>
+      <!-- Worst Bases Financial Drain -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Worst Operational Losses by Base</div>
+        </div>
+        <div style="position:relative;height:260px;">
+          <canvas id="macroBaseChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- COSTLIEST EMPLOYEES GRID -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Top 10 Costliest Personnel (Absence Drain)</div>
+      </div>
+      <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Employee ID</th>
+              <th>Carrier</th>
+              <th>Base</th>
+              <th>Total Events</th>
+              <th>SBL Events</th>
+              <th>Est. Financial Loss</th>
+            </tr>
+          </thead>
+          <tbody id="macro-worst-table">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div> <!-- /macro-view -->
+
+  <!-- ============ BRADFORD DEVIATION ANALYSIS VIEW ============ -->
+  <div id="bradford-view" class="main" style="display:none;">
+    <div class="section-title">📊 Bradford Score Deviation Analysis — 3% Threshold</div>
+
+    <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Employees Analyzed</div>
+        <div class="kpi-value" id="bd-total-emp">—</div>
+        <div class="kpi-sub">All crew in dataset</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-label">Mean Bradford Score</div>
+        <div class="kpi-value" id="bd-mean">—</div>
+        <div class="kpi-sub">Average across all crew</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Outliers Detected</div>
+        <div class="kpi-value" id="bd-outliers">—</div>
+        <div class="kpi-sub">Deviating >3% from mean</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Outlier Percentage</div>
+        <div class="kpi-value" id="bd-outlier-pct">—</div>
+        <div class="kpi-sub">Share of workforce</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns: 1fr 1fr;gap:24px;">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">📈 Bradford Distribution with Deviation Bands</div>
+          <div class="chart-desc">Mean ± 3% deviation threshold highlighted</div>
+        </div>
+        <div style="position:relative;height:280px;">
+          <canvas id="bdDistChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">📊 Outlier Breakdown by Direction</div>
+          <div class="chart-desc">Above vs Below mean deviation</div>
+        </div>
+        <div style="position:relative;height:280px;">
+          <canvas id="bdPieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">🚨 Outlier Employee List — Deviation > 3% from Mean</div>
+        <div class="chart-desc">Employees whose Bradford score falls outside the 3% tolerance band</div>
+      </div>
+      <div class="risk-legend" style="margin-bottom:14px;">
+        <div class="risk-legend-item">
+          <div class="risk-legend-dot" style="background:#ef4444"></div>Above Mean (High Risk)
+        </div>
+        <div class="risk-legend-item">
+          <div class="risk-legend-dot" style="background:#06b6d4"></div>Below Mean (Low Risk)
+        </div>
+        <div style="margin-left:auto;font-size:11px;color:var(--muted);">Mean: <span id="bd-mean-label"></span> ·
+          Deviation Band: ±3% (<span id="bd-band-label"></span>)</div>
+      </div>
+      <div class="risk-table-wrap">
+        <table class="risk-table" id="bdTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Emp #</th>
+              <th>Base</th>
+              <th>Position</th>
+              <th>Bradford Score</th>
+              <th>Deviation %</th>
+              <th>Direction</th>
+              <th>Total Absences</th>
+              <th>Risk Score</th>
+              <th>Risk Level</th>
+            </tr>
+          </thead>
+          <tbody id="bdTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;font-size:11px;color:var(--muted);">
+      ⚠️ Outlier detection uses ±3% deviation from mean Bradford score · Employees outside this band flagged for review
+    </div>
+  </div> <!-- /bradford-view -->
+
+  <!-- ============ SUPERVISOR VIEW ============ -->
+
+  <div id="supervisor-view" class="main" style="display:none;">
+    <div class="section-title">👔 Supervisor Oversight Dashboard</div>
+    <p style="color:var(--muted);margin-bottom:20px;">Each supervisor's score reflects the collective absenteeism health
+      of their direct reports. High scores = poor management oversight signal.</p>
+
+    <!-- KPI Row -->
+    <div class="kpi-row" style="grid-template-columns: repeat(6, 1fr);">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Supervisors</div>
+        <div class="kpi-value" id="sup-total-sups">—</div>
+        <div class="kpi-sub">Unique supervisors</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Critical Teams</div>
+        <div class="kpi-value" id="sup-critical-teams">—</div>
+        <div class="kpi-sub">sup_risk_score ≥ 150</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Avg Team Absences</div>
+        <div class="kpi-value" id="sup-avg-absences">—</div>
+        <div class="kpi-sub">Mean across all teams</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">Program Qualified</div>
+        <div class="kpi-value" id="sup-total-qualified">—</div>
+        <div class="kpi-sub">Across all teams</div>
+      </div>
+      <div class="kpi-card cyan">
+        <div class="kpi-label">Total SBL Events</div>
+        <div class="kpi-value" id="sup-total-sbl">—</div>
+        <div class="kpi-sub">Sick before leave (red flag)</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Avg Oversight Score</div>
+        <div class="kpi-value" id="sup-avg-oversight">—</div>
+        <div class="kpi-sub">Mean sup_risk_score</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-row chart-row-2">
+      <div class="chart-card">
+        <div class="chart-title">📊 Top 15 Supervisors by Oversight Risk</div>
+        <div class="chart-desc">Higher score = more concern. Based on team absenteeism health.</div>
+        <div style="position:relative;height:400px;">
+          <canvas id="supRiskChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🎯 Program Status — All Direct Reports</div>
+        <div class="chart-desc">Breakdown of all employees by attendance program status.</div>
+        <div style="position:relative;height:400px;">
+          <canvas id="supProgramChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supervisor Watchlist -->
+    <div class="section-header" style="margin:32px 0 16px;">
+      <h2>⚠️ Supervisor Oversight Watchlist</h2>
+      <p style="color:var(--muted);margin-top:4px;">Click any row to view team details. Default sort: Oversight Score
+        descending.</p>
+    </div>
+
+    <div class="chart-card">
+      <div class="risk-table-wrap">
+        <table class="risk-table" id="supTable">
+          <thead>
+            <tr>
+              <th onclick="sortSupTable('sup_emp_num')">Supervisor # <span class="sort-arrow"
+                  id="sort-sup_sup_emp_num">↕</span></th>
+              <th onclick="sortSupTable('sup_base')">Base <span class="sort-arrow" id="sort-sup_sup_base">↕</span></th>
+              <th onclick="sortSupTable('total_reports')">Reports <span class="sort-arrow"
+                  id="sort-sup_total_reports">↕</span></th>
+              <th onclick="sortSupTable('avg_risk_score')">Avg Risk <span class="sort-arrow"
+                  id="sort-sup_avg_risk_score">↕</span></th>
+              <th onclick="sortSupTable('sup_risk_score')">Oversight Score <span class="sort-arrow"
+                  id="sort-sup_sup_risk_score">↕</span></th>
+              <th onclick="sortSupTable('critical_count')">Critical <span class="sort-arrow"
+                  id="sort-sup_critical_count">↕</span></th>
+              <th onclick="sortSupTable('high_count')">High <span class="sort-arrow" id="sort-sup_high_count">↕</span>
+              </th>
+              <th onclick="sortSupTable('program_qualified_pct')">Program % <span class="sort-arrow"
+                  id="sort-sup_program_qualified_pct">↕</span></th>
+              <th onclick="sortSupTable('team_sbl_total')">SBL Total <span class="sort-arrow"
+                  id="sort-sup_team_sbl_total">↕</span></th>
+              <th>Worst Report</th>
+              <th>Tier</th>
+            </tr>
+          </thead>
+          <tbody id="supTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  > <!-- /supervisor-view -->
+
+  <!-- ============ EMPLOYEE DETAIL SLIDE-OVER ============ -->
+
+  <!-- ============ SUPERVISOR DETAIL MODAL ============ -->
+  <div class="modal-overlay" id="supModal" onclick="if(event.target===this)closeSupervisorModal()">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:16px;font-weight:800;letter-spacing:-0.3px;" id="supModal-title">Supervisor</div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px;" id="supModal-subtitle"></div>
+        </div>
+        <button class="modal-close" onclick="closeSupervisorModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="supModal-badge" style="margin-bottom:16px;"></div>
+
+        <!-- Team Profile Grid -->
+        <div class="modal-profile">
+          <div class="modal-stat">
+            <div class="modal-stat-label">Team Avg Risk Score</div>
+            <div class="modal-stat-value" id="supModal-avgRisk">—</div>
+          </div>
+          <div class="modal-stat">
+            <div class="modal-stat-label">% Qualified</div>
+            <div class="modal-stat-value" id="supModal-qualPct">—</div>
+          </div>
+          <div class="modal-stat">
+            <div class="modal-stat-label">Total Team Absences</div>
+            <div class="modal-stat-value" id="supModal-totalAbs">—</div>
+          </div>
+          <div class="modal-stat">
+            <div class="modal-stat-label">Avg Bradford</div>
+            <div class="modal-stat-value" id="supModal-avgBrad">—</div>
+          </div>
+          <div class="modal-stat">
+            <div class="modal-stat-label">Total NSP Events</div>
+            <div class="modal-stat-value" id="supModal-nsp">—</div>
+          </div>
+          <div class="modal-stat">
+            <div class="modal-stat-label">Total SBL Events</div>
+            <div class="modal-stat-value" id="supModal-sbl">—</div>
+          </div>
+        </div>
+
+        <!-- Team Monthly Trend -->
+        <div class="chart-card" style="margin-bottom:20px;">
+          <div class="chart-title">📈 Team Monthly Absence Trend</div>
+          <div style="position:relative;height:200px;">
+            <canvas id="supModalMonthlyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Risk Tier Breakdown -->
+        <div class="modal-profile">
+          <div class="kpi-card" style="padding:12px;">
+            <div class="kpi-label">Critical</div>
+            <div class="kpi-value" id="supModal-critical" style="color:#ef4444;">—</div>
+          </div>
+          <div class="kpi-card" style="padding:12px;">
+            <div class="kpi-label">High</div>
+            <div class="kpi-value" id="supModal-high" style="color:#f97316;">—</div>
+          </div>
+          <div class="kpi-card" style="padding:12px;">
+            <div class="kpi-label">Medium</div>
+            <div class="kpi-value" id="supModal-medium" style="color:#f59e0b;">—</div>
+          </div>
+          <div class="kpi-card" style="padding:12px;">
+            <div class="kpi-label">Low</div>
+            <div class="kpi-value" id="supModal-low" style="color:#10b981;">—</div>
+          </div>
+        </div>
+
+        <!-- HR Recommendations -->
+        <div class="chart-card" style="margin-bottom:20px;">
+          <div class="chart-title">📋 HR Recommendations</div>
+          <div id="supModal-recommendations" style="font-size:13px;line-height:1.8;color:var(--text);"></div>
+        </div>
+
+        <!-- Absence Breakdown -->
+        <div class="chart-card" style="margin-bottom:20px;">
+          <div class="chart-title">📊 Team Absence Breakdown</div>
+          <div id="supModal-absence-breakdown" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+
+        <!-- Seniority Info -->
+        <div class="chart-card" style="margin-bottom:20px;">
+          <div class="chart-title">👔 Team Seniority</div>
+          <div id="supModal-seniority" style="font-size:13px;line-height:1.8;color:var(--text);"></div>
+        </div>
+
+        <!-- Direct Reports List -->
+        <div class="chart-title" style="margin-bottom:12px;">👥 Direct Reports (sorted by Combined Score)</div>
+        <div class="risk-table-wrap" style="max-height:none; overflow:visible;">
+          <table class="risk-table">
+            <thead>
+              <tr>
+                <th>Emp #</th>
+                <th>Base</th>
+                <th>Position</th>
+                <th>Combined Score</th>
+                <th>Program Status</th>
+                <th>Seniority</th>
+              </tr>
+            </thead>
+            <tbody id="supModalReportsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="empModal" onclick="if(event.target===this)closeEmployeeModal()">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:16px;font-weight:800;letter-spacing:-0.3px;" id="modal-emp-id">Employee</div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px;" id="modal-subtitle"></div>
+        </div>
+        <button class="modal-close" onclick="closeEmployeeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- KPI Strip -->
+        <div class="modal-profile">
+          <div class="modal-stat-card">
+            <div class="modal-stat-label">Risk Score</div>
+            <div class="modal-stat-value" id="modal-risk">—</div>
+            <div class="modal-stat-sub">Seniority-weighted</div>
+          </div>
+          <div class="modal-stat-card">
+            <div class="modal-stat-label">Combined Score</div>
+            <div class="modal-stat-value" id="modal-combined">—</div>
+            <div class="modal-stat-sub">Risk + Bradford</div>
+          </div>
+          <div class="modal-stat-card">
+            <div class="modal-stat-label">Bradford Factor</div>
+            <div class="modal-stat-value" id="modal-bradford">—</div>
+            <div class="modal-stat-sub">S² × D formula</div>
+          </div>
+          <div class="modal-stat-card">
+            <div class="modal-stat-label">Total Absences</div>
+            <div class="modal-stat-value" id="modal-total-abs">—</div>
+            <div class="modal-stat-sub">FY 2025 events</div>
+          </div>
+        </div>
+        <div class="modal-profile">
+          <div class="modal-stat-card" style="padding:12px 16px;">
+            <div class="modal-stat-label">Seniority</div>
+            <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-top:5px;" id="modal-seniority">—</div>
+          </div>
+          <div class="modal-stat-card" style="padding:12px 16px;">
+            <div class="modal-stat-label">Employment Type</div>
+            <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-top:5px;" id="modal-carrier">—</div>
+          </div>
+        </div>
+
+        <!-- Bradford Gauge -->
+        <div>
+          <div class="modal-section-title">📊 Bradford Factor Gauge</div>
+          <div class="bradford-gauge-wrap">
+            <div style="flex-shrink:0;" id="modal-bradford-tier"></div>
+            <div class="bradford-gauge-bar">
+              <div class="bradford-gauge-fill" id="modal-bradford-fill" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bradford-thresholds">
+            <div class="bft-dot"><span style="color:#10b981;font-size:9px">●</span>&nbsp;&lt;10 Clean</div>
+            <div class="bft-dot"><span style="color:#f59e0b;font-size:9px">●</span>&nbsp;10–199 Monitor</div>
+            <div class="bft-dot"><span style="color:#f97316;font-size:9px">●</span>&nbsp;200–899 Caution</div>
+            <div class="bft-dot"><span style="color:#ef4444;font-size:9px">●</span>&nbsp;≥900 Formal Action</div>
+          </div>
+        </div>
+
+        <!-- Absence Code Breakdown -->
+        <div>
+          <div class="modal-section-title">📋 Absence Code Breakdown</div>
+          <div id="modal-abs-breakdown"></div>
+        </div>
+
+        <!-- Pattern Analysis / Reasonable Doubt -->
+        <div>
+          <div class="modal-section-title">🕵️ Seasonal Pattern Analysis (Reasonable Doubt)</div>
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:12px;line-height:1.5;">
+            Yearly sick absence distribution compared to fleet benchmark. Identifies high-risk event periods (Christmas,
+            Stampede, etc.).
+            When clear pattern exists, the <strong>"reasonable doubt"</strong> standard may be met to request a medical
+            certificate from the employee, even under 5 days duration.
+          </div>
+          <div
+            style="display:flex;gap:12px;margin-bottom:12px;background:rgba(255,255,255,0.03);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
+            <div>
+              <label
+                style="display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Employee
+                Birthday Month</label>
+              <select id="modal-bday-month" class="filter-select" style="width:140px;background:#0d1424;"
+                onchange="updateModalPatternChart()">
+                <option value="">-- Not Analyzed --</option>
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+              </select>
+            </div>
+            <div>
+              <label
+                style="display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Target
+                Event / Holiday Pattern</label>
+              <select id="modal-event-select" class="filter-select" style="width:200px;background:#0d1424;"
+                onchange="updateModalPatternChart()">
+                <option value="none">-- Default Automated Analysis --</option>
+                <option value="christmas">Christmas & New Year (Dec)</option>
+                <option value="easter">Easter Weekend (Mar/Apr)</option>
+                <option value="stampede">Stampede / Summer Peak (Jul)</option>
+                <option value="thanksgiving">Thanksgiving (Oct)</option>
+              </select>
+            </div>
+          </div>
+          <div
+            style="background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;position:relative;">
+            <div style="position:relative;height:180px;"><canvas id="modalPatternChart"></canvas></div>
+            <div id="pattern-doubt-flag"
+              style="display:none;margin-top:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;border-radius:4px;font-size:11px;color:#fca5a5;line-height:1.4;">
+            </div>
+          </div>
+        </div>
+
+        <!-- HR Action Recommendations -->
+        <div>
+          <div class="modal-section-title">🏢 HR Action Recommendations</div>
+          <div style="font-size:11px;color:#475569;margin-bottom:12px;line-height:1.6;">
+            Recommendations are <strong>auto-generated</strong> based on this employee's absence profile.
+            All actions must be reviewed by a qualified HR / Labour Relations professional before implementation.
+            <span style="color:#f59e0b;">⚠️ POC Only.</span>
+          </div>
+          <div id="modal-hr-actions"></div>
+        </div>
+
+        <div style="text-align:center;padding:16px 0 4px;font-size:10px;color:#334155;line-height:1.6;">
+          ⚠️ Proof of Concept · For HR Internal Use Only<br>
+          Recommendations require professional HR judgment and compliance review before any action is taken
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

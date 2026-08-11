@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew Intelligence — Management Views</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    :root {
+      --bg-deep: #070b14;
+      --bg-card: #0d1424;
+      --bg-card2: #111827;
+      --border: rgba(255, 255, 255, 0.07);
+      --accent: #3b82f6;
+      --accent2: #6366f1;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --green: #10b981;
+      --cyan: #06b6d4;
+      --purple: #8b5cf6;
+      --orange: #f97316;
+      --text: #f1f5f9;
+      --muted: #64748b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .role-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .role-btn {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .role-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .role-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .main {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      text-align: center;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .forecast-kpi {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .forecast-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent2);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .forecast-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--accent2);
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 16px;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .chart-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .chart-area {
+      height: 250px;
+      position: relative;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .filter-bar label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .filter-select {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table th {
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+    }
+
+    .tier-badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .tier-critical {
+      background: var(--red);
+      color: white;
+    }
+
+    .tier-high {
+      background: var(--orange);
+      color: white;
+    }
+
+    .tier-medium {
+      background: var(--amber);
+      color: black;
+    }
+
+    .tier-low {
+      background: var(--green);
+      color: white;
+    }
+
+    .hr-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 16px;
+    }
+
+    .hr-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .hr-card-steps {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hr-card-urgent {
+      border-left: 4px solid var(--red);
+    }
+
+    .hr-card-warning {
+      border-left: 4px solid var(--orange);
+    }
+
+    .hr-card-support {
+      border-left: 4px solid var(--cyan);
+    }
+
+    .hr-card-info {
+      border-left: 4px solid var(--accent);
+    }
+
+    .hr-card-green {
+      border-left: 4px solid var(--green);
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 24px;
+      cursor: pointer;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .modal-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .modal-stat {
+      background: var(--bg-card2);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .modal-stat-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .modal-stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .modal-chart {
+      height: 180px;
+      margin-bottom: 24px;
+    }
+
+    .modal-section {
+      margin-bottom: 20px;
+    }
+
+    .modal-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--muted);
+    }
+
+    .code-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .code-card {
+      background: var(--bg-card2);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .code-card-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .code-card-label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .today-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--red);
+      z-index: 10;
+    }
+
+    .today-label {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: var(--red);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="logo">Crew Intelligence — Management Views</div>
+    <div class="role-nav">
+      <button class="role-btn active" onclick="switchView('executive')">🏢 Executive</button>
+      <button class="role-btn" onclick="switchView('vp')">📊 VP</button>
+      <button class="role-btn" onclick="switchView('senior')">👔 Senior Manager</button>
+      <button class="role-btn" onclick="switchView('supervisor')">👤 Supervisor</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="executive" class="view active"></div>
+    <div id="vp" class="view"></div>
+    <div id="senior" class="view"></div>
+    <div id="supervisor" class="view"></div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+    <div class="modal" id="modalContent" style="position:relative;">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+  </div>
+
+  <script>
+    Chart.register(ChartDataLabels);
+
+    let employees = [];
+    let supervisors = [];
+    let currentView = 'executive';
+
+    function costFor(e) {
+      const sbl = e.codes ? (e.codes.SBL || 0) : 0;
+      return sbl * 600 + ((e.total_absences || 0) - sbl) * 450;
+    }
+
+    function getTier(score) {
+      if (score >= 150) return 'critical';
+      if (score >= 100) return 'high';
+      if (score >= 50) return 'medium';
+      return 'low';
+    }
+
+    function formatCost(n) {
+      if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return '$' + (n / 1000).toFixed(0) + 'K';
+      return '$' + n;
+    }
+
+    function getCombinedTier(score) {
+      if (score >= 200) return 'critical';
+      if (score >= 120) return 'high';
+      if (score >= 80) return 'medium';
+      return 'low';
+    }
+
+    function forecastTrend(data, monthsAhead) {
+      const window = data.slice(6, 12);
+      const n = window.length;
+      const weights = [1, 1.5, 2, 2.5, 3, 4];
+      let sumW = 0, sumWX = 0, sumWY = 0, sumWXX = 0, sumWXY = 0;
+      for (let i = 0; i < n; i++) {
+        const w = weights[i];
+        sumW += w;
+        sumWX += w * i;
+        sumWY += w * window[i];
+        sumWXX += w * i * i;
+        sumWXY += w * i * window[i];
+      }
+      const denom = sumW * sumWXX - sumWX * sumWX;
+      if (denom === 0) return Math.round(window[n - 1] * 0.9);
+      const slope = (sumW * sumWXY - sumWX * sumWY) / denom;
+      const intercept = (sumWY - slope * sumWX) / sumW;
+      const raw = intercept + slope * (n + monthsAhead);
+      return Math.max(0, Math.round(raw * 0.9));
+    }
+
+    function fleetMonthlyTotals(empList) {
+      const totals = Array(12).fill(0);
+      empList.forEach(e => {
+        (e.monthly_sck_events || []).forEach((v, i) => totals[i] += v);
+      });
+      return totals;
+    }
+
+    function predictTierMigration(empList) {
+      let willEscalate = 0, willDeescalate = 0;
+      empList.forEach(e => {
+        const personal = e.monthly_sck_events || Array(12).fill(0);
+        const h2Total = personal.slice(6, 12).reduce((a, b) => a + b, 0);
+        let projTotal = 0;
+        for (let m = 0; m < 6; m++) projTotal += forecastTrend(personal, m);
+        if (projTotal > h2Total * 1.1) willEscalate++;
+        else if (projTotal < h2Total * 0.9) willDeescalate++;
+      });
+      return { willEscalate, willDeescalate, stable: empList.length - willEscalate - willDeescalate };
+    }
+
+    function bradfordAccelerating(empList) {
+      return empList.filter(e => {
+        const m = e.monthly_sck_events || [];
+        const h1Spells = m.slice(0, 6).filter(v => v > 0).length;
+        const h2Spells = m.slice(6, 12).filter(v => v > 0).length;
+        return h2Spells > h1Spells && e.bradford >= 250;
+      });
+    }
+
+    function buildSupervisorData(emp) {
+      const supMap = {};
+      emp.forEach(e => {
+        const key = e.sup_emp_num;
+        if (!supMap[key]) {
+          supMap[key] = {
+            sup_emp_num: key,
+            sup_base: e.sup_base || 'UNK',
+            reports: [],
+            total_reports: 0,
+            total_absences: 0,
+            sum_risk_score: 0,
+            sum_combined_score: 0,
+            sum_bradford: 0,
+            critical_count: 0,
+            high_count: 0,
+            medium_count: 0,
+            low_count: 0,
+            program_qualified_count: 0,
+            team_sbl_total: 0,
+            team_nsp_total: 0
+          };
+        }
+        const s = supMap[key];
+        s.total_reports++;
+        s.total_absences += e.total_absences || 0;
+        s.sum_risk_score += e.risk_score || 0;
+        s.sum_combined_score += e.combined_score || 0;
+        s.sum_bradford += e.bradford || 0;
+        if (e.attendance_program_qualified) s.program_qualified_count++;
+        s.team_sbl_total += (e.codes && e.codes.SBL) ? e.codes.SBL : 0;
+        s.team_nsp_total += (e.codes && e.codes.NSP) ? e.codes.NSP : 0;
+        const combined = e.combined_score || 0;
+        if (combined >= 150) s.critical_count++;
+        else if (combined >= 100) s.high_count++;
+        else if (combined >= 50) s.medium_count++;
+        else s.low_count++;
+        s.reports.push(e);
+      });
+      return Object.values(supMap).map(s => {
+        s.avg_risk_score = s.sum_risk_score / s.total_reports;
+        s.avg_combined_score = s.sum_combined_score / s.total_reports;
+        s.avg_bradford = s.sum_bradford / s.total_reports;
+        s.program_qualified_pct = (s.program_qualified_count / s.total_reports) * 100;
+        s.sup_risk_score = (s.avg_combined_score * 0.5)
+          + (s.program_qualified_pct * 2)
+          + (s.critical_count * 5)
+          + (s.team_sbl_total * 3);
+        s.tier = getTier(s.sup_risk_score);
+        return s;
+      });
+    }
+
+    function switchView(view) {
+      document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.role-btn[onclick*="${view}"]`).classList.add('active');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(view).classList.add('active');
+      currentView = view;
+      if (view === 'executive') renderExecutive();
+      else if (view === 'vp') renderVP();
+      else if (view === 'senior') renderSenior();
+      else if (view === 'supervisor') renderSupervisorView();
+    }
+
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    function closeModalOutside(e) { if (e.target.id === 'modalOverlay') closeModal(); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    function openEmployeeModalFromRow(empNum) {
+      const emp = employees.find(e => e.emp_num === empNum);
+      if (emp) openEmployeeModal(emp);
+    }
+
+    function openEmployeeModal(e) {
+      if (!e || !e.emp_num) return;
+      const modal = document.getElementById('modalContent');
+      const tier = getTier(e.risk_score);
+      const combinedTier = getCombinedTier(e.combined_score);
+      const cost = costFor(e);
+      const seniority = e.emp_num < 10000 ? 'Senior' : (e.emp_num < 50000 ? 'Mid' : 'Junior');
+
+      let monthlyData = [];
+      if (e.monthly_events) {
+        const months = ['SCK', 'NSP', 'LAA', 'LSK', 'SBL', 'BEV', 'UAV', 'FAT', 'COS', 'BRU', 'PDU', 'UFT'];
+        monthlyData = months.map(code => (e.monthly_events[code] || []).reduce((a, b) => a + b, 0));
+      } else if (e.monthly_sck_events) {
+        monthlyData = e.monthly_sck_events;
+      }
+
+      let hrActions = [];
+      if ((e.codes && e.codes.NSP) >= 3) hrActions.push({ cls: 'hr-card-urgent', title: 'DISCIPLINARY', steps: 'Immediate formal warning — 3+ No Show Pairing violations.' });
+      else if (e.codes && e.codes.NSP > 0) hrActions.push({ cls: 'hr-card-warning', title: 'Counseling', steps: 'Informal counseling — address No Show Pattern.' });
+      if (e.codes && e.codes.COS > 0) hrActions.push({ cls: 'hr-card-urgent', title: 'Performance Investigation', steps: 'COS violations require immediate performance review.' });
+      if ((e.codes && e.codes.LAA) >= 4) hrActions.push({ cls: 'hr-card-warning', title: 'Formal AIP', steps: '4+ Late Arrivals — initiate Attendance Improvement Plan.' });
+      else if (e.codes && e.codes.LAA > 0) hrActions.push({ cls: 'hr-card-info', title: 'Informal Coaching', steps: 'Coach on punctuality expectations.' });
+      if ((e.codes && e.codes.LSK) >= 3) hrActions.push({ cls: 'hr-card-warning', title: 'Formal Counseling', steps: '3+ Late Sick Calls — formal counseling required.' });
+      else if (e.codes && e.codes.LSK > 0) hrActions.push({ cls: 'hr-card-info', title: 'Procedure Reminder', steps: 'Remind employee of sick call procedures.' });
+      if ((e.codes && e.codes.SBL) >= 3) hrActions.push({ cls: 'hr-card-warning', title: 'Reasonable Doubt Met', steps: 'Mandate medical certificates — pattern suggests vacation padding.' });
+      else if (e.codes && e.codes.SBL > 0) hrActions.push({ cls: 'hr-card-info', title: 'Monitor Pattern', steps: 'Monitor SBL usage.' });
+      if ((e.codes && e.codes.BEV) >= 3) hrActions.push({ cls: 'hr-card-support', title: 'Mental Health Intervention', steps: 'EAP referral — 3+ bereavement events.' });
+      else if (e.codes && e.codes.BEV > 0) hrActions.push({ cls: 'hr-card-support', title: 'Compassionate Support', steps: 'Provide compassionate support.' });
+      if ((e.codes && e.codes.FAT) >= 3) hrActions.push({ cls: 'hr-card-warning', title: 'FRMS Safety Review', steps: '3+ Fatigue events — review duty patterns.' });
+      else if (e.codes && e.codes.FAT > 0) hrActions.push({ cls: 'hr-card-info', title: 'Review Duty Patterns', steps: 'Review rosters and fatigue indicators.' });
+      if ((e.codes && e.codes.SCK) >= 15) hrActions.push({ cls: 'hr-card-info', title: 'Occupational Health Referral', steps: '15+ sick events — occupational health assessment.' });
+      else if ((e.codes && e.codes.SCK) >= 7) hrActions.push({ cls: 'hr-card-info', title: 'Wellness Check-in', steps: 'Wellness check-in to discuss attendance.' });
+      if (e.bradford >= 900) hrActions.push({ cls: 'hr-card-urgent', title: 'Formal Bradford Investigation', steps: 'Bradford factor exceeds 900.' });
+      else if (e.bradford >= 200) hrActions.push({ cls: 'hr-card-warning', title: 'Bradford Caution Zone', steps: 'Bradford factor elevated — monitor for patterns.' });
+      if (e.emp_num < 10000 && e.risk_score >= 80) hrActions.push({ cls: 'hr-card-info', title: 'Seniority Risk Flag', steps: 'Senior employee with elevated risk.' });
+      if (hrActions.length === 0) hrActions.push({ cls: 'hr-card-green', title: 'No Immediate HR Action', steps: 'Employee does not meet intervention thresholds.' });
+
+      let codeBreakdown = [];
+      if (e.codes) {
+        codeBreakdown = Object.entries(e.codes).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+      }
+
+      const chartCanvasId = 'empChart' + e.emp_num;
+      modal.innerHTML = `
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">Employee #${e.emp_num} — ${e.position}</div>
+            <div style="color:var(--muted);font-size:12px;margin-top:4px;">${e.base} · ${e.carrier} · ${e.ft_pt}</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <span class="tier-badge tier-${tier}">${tier.toUpperCase()} Risk</span>
+            <span class="tier-badge tier-${combinedTier}">${combinedTier.toUpperCase()} Combined</span>
+          </div>
+        </div>
+        <div class="modal-stats">
+          <div class="modal-stat"><div class="modal-stat-value">${e.risk_score.toFixed(1)}</div><div class="modal-stat-label">Risk Score</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${e.bradford.toLocaleString()}</div><div class="modal-stat-label">Bradford</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${e.combined_score.toFixed(1)}</div><div class="modal-stat-label">Combined</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${e.total_absences}</div><div class="modal-stat-label">Total Absences</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${seniority}</div><div class="modal-stat-label">Seniority</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${formatCost(cost)}</div><div class="modal-stat-label">Cost</div></div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Monthly Absence Trend</div>
+          <div class="modal-chart"><canvas id="${chartCanvasId}"></canvas></div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Absence Code Breakdown</div>
+          <div class="code-grid">${codeBreakdown.map(([code, count]) => `
+            <div class="code-card">
+              <div class="code-card-value">${count}</div>
+              <div class="code-card-label">${code}</div>
+            </div>
+          `).join('')}</div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">HR Action Cards</div>
+          ${hrActions.map(a => `<div class="hr-card ${a.cls}"><div class="hr-card-title">${a.title}</div><div class="hr-card-steps">${a.steps}</div></div>`).join('')}
+        </div>
+      `;
+      document.getElementById('modalOverlay').classList.add('open');
+
+      setTimeout(() => {
+        new Chart(document.getElementById(chartCanvasId), {
+          type: 'bar',
+          data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], datasets: [{ data: monthlyData, backgroundColor: '#3b82f699', borderColor: '#3b82f6', borderWidth: 1 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } } } }
+        });
+      }, 50);
+    }
+
+    function openSupervisorModal(sup) {
+      const modal = document.getElementById('modalContent');
+      let monthlyTotals = Array(12).fill(0);
+      sup.reports.forEach(r => {
+        if (r.monthly_sck_events) {
+          r.monthly_sck_events.forEach((v, i) => { monthlyTotals[i] += v; });
+        }
+      });
+
+      let codeTotals = {};
+      sup.reports.forEach(r => {
+        if (r.codes) {
+          Object.entries(r.codes).forEach(([code, count]) => {
+            codeTotals[code] = (codeTotals[code] || 0) + count;
+          });
+        }
+      });
+      const codeBreakdown = Object.entries(codeTotals).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+      modal.innerHTML = `
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">Supervisor #${sup.sup_emp_num}</div>
+            <div style="color:var(--muted);font-size:12px;margin-top:4px;">${sup.sup_base} · ${sup.total_reports} Reports</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <span class="tier-badge tier-${sup.tier}">${sup.tier.toUpperCase()}</span>
+          </div>
+        </div>
+        <div class="modal-stats">
+          <div class="modal-stat"><div class="modal-stat-value">${sup.avg_risk_score.toFixed(1)}</div><div class="modal-stat-label">Avg Risk</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${sup.program_qualified_pct.toFixed(0)}%</div><div class="modal-stat-label">% Qualified</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${sup.total_absences}</div><div class="modal-stat-label">Total Absences</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${sup.avg_bradford.toFixed(0)}</div><div class="modal-stat-label">Avg Bradford</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${sup.team_nsp_total}</div><div class="modal-stat-label">NSP Total</div></div>
+          <div class="modal-stat"><div class="modal-stat-value">${sup.team_sbl_total}</div><div class="modal-stat-label">SBL Total</div></div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Monthly Team Absences</div>
+          <div class="modal-chart"><canvas id="supChart"></canvas></div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Risk Tier Distribution</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+            <div class="modal-stat"><div class="modal-stat-value" style="color:var(--red)">${sup.critical_count}</div><div class="modal-stat-label">Critical</div></div>
+            <div class="modal-stat"><div class="modal-stat-value" style="color:var(--orange)">${sup.high_count}</div><div class="modal-stat-label">High</div></div>
+            <div class="modal-stat"><div class="modal-stat-value" style="color:var(--amber)">${sup.medium_count}</div><div class="modal-stat-label">Medium</div></div>
+            <div class="modal-stat"><div class="modal-stat-value" style="color:var(--green)">${sup.low_count}</div><div class="modal-stat-label">Low</div></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Absence Code Breakdown</div>
+          <div class="code-grid">${codeBreakdown.map(([code, count]) => `
+            <div class="code-card">
+              <div class="code-card-value">${count}</div>
+              <div class="code-card-label">${code}</div>
+            </div>
+          `).join('')}</div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Direct Reports</div>
+          <table class="data-table">
+            <thead><tr><th>Emp #</th><th>Base</th><th>Position</th><th>Risk</th><th>Combined</th><th>Bradford</th></tr></thead>
+            <tbody>${sup.reports.slice(0, 20).map(r => `<tr onclick="openEmployeeModalFromRow(${r.emp_num})"><td>${r.emp_num}</td><td>${r.base}</td><td>${r.position}</td><td>${r.risk_score.toFixed(1)}</td><td>${r.combined_score.toFixed(1)}</td><td>${r.bradford}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      `;
+      document.getElementById('modalOverlay').classList.add('open');
+
+      setTimeout(() => {
+        new Chart(document.getElementById('supChart'), {
+          type: 'line',
+          data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], datasets: [{ data: monthlyTotals, borderColor: '#3b82f6', backgroundColor: '#3b82f620', fill: true, tension: 0.4 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } } } }
+        });
+      }, 50);
+    }
+
+    function buildForecastChart(canvasId, historical, projected) {
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return;
+      const allData = [...historical, ...projected];
+      const historicalLen = historical.length;
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan+1', 'Feb+1', 'Mar+1', 'Apr+1', 'May+1', 'Jun+1'],
+          datasets: [
+            {
+              label: 'Historical',
+              data: allData,
+              borderColor: '#3b82f6',
+              backgroundColor: '#3b82f620',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 3,
+              pointBackgroundColor: allData.map((_, i) => i >= historicalLen ? '#6366f1' : '#3b82f6'),
+              borderWidth: 2,
+              segment: {
+                borderDash: ctx => {
+                  const index = ctx.p0DataIndex;
+                  return index >= historicalLen ? [6, 3] : undefined;
+                }
+              }
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            datalabels: { display: false },
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx2 => {
+                  const idx = ctx2.dataIndex;
+                  const label = idx >= historicalLen ? 'Projected' : 'Historical';
+                  return `${label}: ${ctx2.raw}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ==================== EXECUTIVE VIEW ====================
+    function renderExecutive() {
+      const div = document.getElementById('executive');
+      const totalCrew = employees.length;
+      const totalAbsences = employees.reduce((a, e) => a + (e.total_absences || 0), 0);
+      const absenceRate = (totalAbsences / totalCrew).toFixed(2);
+      const totalCost = employees.reduce((a, e) => a + costFor(e), 0);
+      const sblCost = employees.reduce((a, e) => a + ((e.codes && e.codes.SBL) ? e.codes.SBL * 600 : 0), 0);
+      const sblPct = ((sblCost / totalCost) * 100).toFixed(1);
+      const qualified = employees.filter(e => e.attendance_program_qualified).length;
+      const qualifiedPct = ((qualified / totalCrew) * 100).toFixed(1);
+      const critical = employees.filter(e => (e.combined_score || 0) >= 200).length;
+
+      const bases = {};
+      employees.forEach(e => {
+        if (!bases[e.base]) bases[e.base] = { crew: 0, absences: 0, cost: 0, qualified: 0 };
+        bases[e.base].crew++;
+        bases[e.base].absences += e.total_absences || 0;
+        bases[e.base].cost += costFor(e);
+        if (e.attendance_program_qualified) bases[e.base].qualified++;
+      });
+      const baseData = Object.entries(bases).map(([base, d]) => ({
+        base, ...d,
+        avgRisk: (d.absences / d.crew).toFixed(1),
+        qualPct: ((d.qualified / d.crew) * 100).toFixed(0),
+        costPerPerson: d.cost / d.crew
+      })).sort((a, b) => b.costPerPerson - a.costPerPerson);
+
+      const monthlyTrend = fleetMonthlyTotals(employees);
+
+      const wsData = employees.filter(e => e.carrier === 'WS');
+      const wrData = employees.filter(e => e.carrier === 'WR');
+      const wsAbs = wsData.reduce((a, e) => a + (e.total_absences || 0), 0);
+      const wrAbs = wrData.reduce((a, e) => a + (e.total_absences || 0), 0);
+      const wsCost = wsData.reduce((a, e) => a + costFor(e), 0);
+      const wrCost = wrData.reduce((a, e) => a + costFor(e), 0);
+      const wsQual = ((wsData.filter(e => e.attendance_program_qualified).length / wsData.length) * 100).toFixed(1);
+      const wrQual = ((wrData.filter(e => e.attendance_program_qualified).length / wrData.length) * 100).toFixed(1);
+
+      let critCount = 0, highCount = 0, mediumCount = 0, lowCount = 0;
+      employees.forEach(e => {
+        const tier = getCombinedTier(e.combined_score || 0);
+        if (tier === 'critical') critCount++;
+        else if (tier === 'high') highCount++;
+        else if (tier === 'medium') mediumCount++;
+        else lowCount++;
+      });
+
+      const projected = [];
+      for (let m = 0; m < 6; m++) projected.push(forecastTrend(monthlyTrend, m));
+      const proj6MonthAbs = projected.reduce((a, b) => a + b, 0);
+      const avgCostPerAbs = totalCost / totalAbsences;
+      const proj6MonthCost = proj6MonthAbs * avgCostPerAbs;
+      const migration = predictTierMigration(employees);
+      const bradAccel = bradfordAccelerating(employees);
+
+      const positions = ['FA', 'CA', 'FO', 'RA', 'RF', 'RC', 'FL'];
+      const posColors = ['#6366f1', '#10b981', '#06b6d4', '#f59e0b', '#f97316', '#ef4444', '#8b5cf6'];
+      const positionCosts = positions.map(pos => {
+        const emps = employees.filter(e => e.position === pos);
+        const totalCost = emps.reduce((a, e) => a + costFor(e), 0);
+        return emps.length > 0 ? totalCost / emps.length : 0;
+      });
+
+      div.innerHTML = `
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-value">${totalCrew.toLocaleString()}</div><div class="kpi-label">Total Crew</div></div>
+          <div class="kpi-card"><div class="kpi-value">${absenceRate}</div><div class="kpi-label">Fleet Absence Rate</div></div>
+          <div class="kpi-card"><div class="kpi-value">${formatCost(totalCost)}</div><div class="kpi-label">Total Fleet Cost</div></div>
+          <div class="kpi-card"><div class="kpi-value">${sblPct}%</div><div class="kpi-label">SBL Cost %</div></div>
+          <div class="kpi-card"><div class="kpi-value">${qualifiedPct}%</div><div class="kpi-label">% Program Qualified</div></div>
+          <div class="kpi-card"><div class="kpi-value" style="color:var(--red)">${critical}</div><div class="kpi-label">Critical Risk Count</div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card">
+            <div class="chart-title">Cost by Base by employee</div>
+            <div class="chart-area"><canvas id="execChart1"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Monthly Absence Trend</div>
+            <div class="chart-area"><canvas id="execChart2"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Risk Distribution</div>
+            <div class="chart-area"><canvas id="execChart3"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Carrier Comparison</div>
+            <div class="chart-area"><canvas id="execChart4"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Cost by Position by employee </div>
+            <div class="chart-area"><canvas id="execChart5"></canvas></div>
+          </div>
+        </div>
+        <div class="forecast-section">
+          <div class="forecast-title">📈 6-Month Fleet Forecast</div>
+          <div class="kpi-row" style="margin-bottom:24px;">
+            <div class="kpi-card forecast-kpi"><div class="kpi-value">${proj6MonthAbs.toLocaleString()}</div><div class="kpi-label">Projected 6M Absences</div></div>
+            <div class="kpi-card forecast-kpi"><div class="kpi-value">${formatCost(proj6MonthCost)}</div><div class="kpi-label">Projected 6M Cost</div></div>
+            <div class="kpi-card forecast-kpi"><div class="kpi-value" style="color:var(--red)">${migration.willEscalate}</div><div class="kpi-label">Risk Escalation Count</div></div>
+            <div class="kpi-card forecast-kpi"><div class="kpi-value" style="color:var(--orange)">${bradAccel.length}</div><div class="kpi-label">Bradford Accelerating</div></div>
+          </div>
+          <div class="chart-card" style="margin-bottom:20px;position:relative;">
+            <div class="chart-title">Fleet Absence Trajectory</div>
+            <div style="position:absolute;top:16px;right:16px;display:flex;gap:16px;font-size:10px;z-index:10;">
+              <span><span style="display:inline-block;width:20px;height:3px;background:#3b82f6;vertical-align:middle;"></span> Historical</span>
+              <span><span style="display:inline-block;width:20px;height:3px;background:#6366f1;background: repeating-linear-gradient(90deg, #6366f1 0, #6366f1 6px, transparent 6px, transparent 9px);vertical-align:middle;"></span> Projected</span>
+              <span><span style="display:inline-block;width:2px;height:14px;background:var(--red);vertical-align:middle;"></span> Today</span>
+            </div>
+            <div class="chart-area"><canvas id="forecastChart"></canvas></div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Direction</th><th>Count</th><th>% of Fleet</th><th>Insight</th></tr></thead>
+            <tbody>
+              <tr><td style="color:var(--red)">⬆ Escalating</td><td>${migration.willEscalate}</td><td>${((migration.willEscalate / employees.length) * 100).toFixed(1)}%</td><td>Employees trending toward a higher risk tier</td></tr>
+              <tr><td style="color:var(--green)">➡ Stable</td><td>${migration.stable}</td><td>${((migration.stable / employees.length) * 100).toFixed(1)}%</td><td>No significant trend change</td></tr>
+              <tr><td style="color:var(--cyan)">⬇ De-escalating</td><td>${migration.willDeescalate}</td><td>${((migration.willDeescalate / employees.length) * 100).toFixed(1)}%</td><td>Employees trending toward improvement</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top 5 Worst Bases</div>
+          <table class="data-table">
+            <thead><tr><th>Base</th><th>Crew</th><th>Total Absences</th><th>Avg Risk</th><th>Fleet Cost</th><th>% Qualified</th></tr></thead>
+            <tbody>${baseData.slice(0, 5).map(b => `<tr onclick="vpBase='${b.base}';switchView('vp')" style="cursor:pointer"><td>${b.base}</td><td>${b.crew}</td><td>${b.absences}</td><td>${b.avgRisk}</td><td>${formatCost(b.cost)}</td><td>${b.qualPct}%</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      `;
+
+      setTimeout(() => {
+        new Chart(document.getElementById('execChart1'), {
+          type: 'bar',
+          data: { labels: baseData.map(b => b.base), datasets: [{ data: baseData.map(b => b.costPerPerson), backgroundColor: '#3b82f6', borderRadius: 6 }] },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => formatCost(v) } }, y: { grid: { color: 'transparent' }, ticks: { color: '#94a3b8', font: { size: 11 } } } } }
+        });
+
+        new Chart(document.getElementById('execChart2'), {
+          type: 'line',
+          data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], datasets: [{ data: monthlyTrend, borderColor: '#3b82f6', backgroundColor: '#3b82f620', fill: true, tension: 0.4 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } } } }
+        });
+
+        new Chart(document.getElementById('execChart3'), {
+          type: 'doughnut',
+          data: { labels: ['Critical', 'High', 'Medium', 'Low'], datasets: [{ data: [critCount, highCount, mediumCount, lowCount], backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#10b981'] }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
+        });
+
+        new Chart(document.getElementById('execChart4'), {
+          type: 'bar',
+          data: {
+            labels: ['Total Absences', 'Fleet Cost ($K)', '% Qualified'],
+            datasets: [
+              { label: 'WS', data: [wsAbs, wsCost / 1000, parseFloat(wsQual)], backgroundColor: '#3b82f6' },
+              { label: 'WR', data: [wrAbs, wrCost / 1000, parseFloat(wrQual)], backgroundColor: '#10b981' }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } } } }
+        });
+
+        new Chart(document.getElementById('execChart5'), {
+          type: 'bar',
+          data: {
+            labels: positions,
+            datasets: [{
+              label: 'Cost',
+              data: positionCosts,
+              backgroundColor: posColors,
+              borderRadius: 8
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => formatCost(v) } } } }
+        });
+
+        buildForecastChart('forecastChart', monthlyTrend, projected);
+      }, 50);
+    }
+
+    // ==================== VP VIEW ====================
+    let vpBase = 'All';
+
+    function renderVP() {
+      const div = document.getElementById('vp');
+      const filtered = vpBase === 'All' ? employees : employees.filter(e => e.base === vpBase);
+      const bases = [...new Set(employees.map(e => e.base))].sort();
+
+      const crewCount = filtered.length;
+      const avgAbsences = (filtered.reduce((a, e) => a + (e.total_absences || 0), 0) / crewCount || 0).toFixed(1);
+      const baseCost = filtered.reduce((a, e) => a + costFor(e), 0);
+      const supList = [...new Set(filtered.map(e => e.sup_emp_num))];
+      const qualified = filtered.filter(e => e.attendance_program_qualified).length;
+      const qualPct = ((qualified / crewCount) * 100).toFixed(1);
+
+      const positionCounts = {};
+      filtered.forEach(e => { positionCounts[e.position] = (positionCounts[e.position] || 0) + 1; });
+
+      const codeTotals = {};
+      filtered.forEach(e => {
+        if (e.codes) {
+          Object.entries(e.codes).forEach(([code, count]) => {
+            codeTotals[code] = (codeTotals[code] || 0) + count;
+          });
+        }
+      });
+      const topCodes = Object.entries(codeTotals).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+      const supData = supList.map(s => {
+        const supEmps = filtered.filter(e => e.sup_emp_num === s);
+        const base = supEmps[0]?.sup_base || 'UNK';
+        const avgRisk = supEmps.reduce((a, e) => a + (e.risk_score || 0), 0) / supEmps.length;
+        const qualCount = supEmps.filter(e => e.attendance_program_qualified).length;
+        const sblTotal = supEmps.reduce((a, e) => a + ((e.codes && e.codes.SBL) ? e.codes.SBL : 0), 0);
+        const supScore = (avgRisk * 0.5) + ((qualCount / supEmps.length) * 200) + (supEmps.filter(e => (e.combined_score || 0) >= 150).length * 50) + (sblTotal * 30);
+        return { sup_emp_num: s, base, teamSize: supEmps.length, avgRisk, qualPct: ((qualCount / supEmps.length) * 100).toFixed(0), tier: getTier(supScore), sblTotal };
+      }).sort((a, b) => b.avgRisk - a.avgRisk);
+
+      const monthlyTrend = fleetMonthlyTotals(filtered);
+      const projected = [];
+      for (let m = 0; m < 6; m++) projected.push(forecastTrend(monthlyTrend, m));
+      const proj6MonthCost = projected.reduce((a, b) => a + b, 0) * (baseCost / (filtered.reduce((a, e) => a + (e.total_absences || 0), 0) || 1));
+      const migration = predictTierMigration(filtered);
+      const bradAccel = bradfordAccelerating(filtered);
+
+      const escalationRisks = filtered.map(e => {
+        const personal = e.monthly_sck_events || Array(12).fill(0);
+        const h2Total = personal.slice(6, 12).reduce((a, b) => a + b, 0);
+        let projTotal = 0;
+        for (let m = 0; m < 6; m++) projTotal += forecastTrend(personal, m);
+        const pctChange = h2Total > 0 ? ((projTotal - h2Total) / h2Total * 100).toFixed(0) : 0;
+        return { e, h2Total, projTotal, pctChange };
+      }).filter(x => x.h2Total > 0).sort((a, b) => parseInt(b.pctChange) - parseInt(a.pctChange)).slice(0, 5);
+
+      div.innerHTML = `
+        <div class="filter-bar">
+          <label>Base:</label>
+          <select class="filter-select" onchange="vpBase=this.value;renderVP()">
+            <option value="All">All Bases</option>
+            ${bases.map(b => `<option value="${b}" ${vpBase === b ? 'selected' : ''}>${b}</option>`).join('')}
+          </select>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-value">${crewCount}</div><div class="kpi-label">Base Crew Count</div></div>
+          <div class="kpi-card"><div class="kpi-value">${avgAbsences}</div><div class="kpi-label">Avg Absence Rate</div></div>
+          <div class="kpi-card"><div class="kpi-value">${formatCost(baseCost)}</div><div class="kpi-label">Base Cost</div></div>
+          <div class="kpi-card"><div class="kpi-value">${supList.length}</div><div class="kpi-label">Supervisors</div></div>
+          <div class="kpi-card"><div class="kpi-value">${qualPct}%</div><div class="kpi-label">% Program Qualified</div></div>
+          <div class="kpi-card"><div class="kpi-value" style="color:var(--red)">${supData[0]?.sup_emp_num || 'N/A'}</div><div class="kpi-label">Worst Supervisor</div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card">
+            <div class="chart-title">Position Breakdown</div>
+            <div class="chart-area"><canvas id="vpChart1"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Absence Code Breakdown</div>
+            <div class="chart-area"><canvas id="vpChart2"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Supervisor Heatmap</div>
+          <table class="data-table">
+            <thead><tr><th>Supervisor #</th><th>Team Size</th><th>Avg Risk</th><th>Oversight Score</th><th>Tier</th><th>Team SBL</th><th>% Qualified</th></tr></thead>
+            <tbody>${supData.map(s => `<tr onclick="seniorSup=${s.sup_emp_num};switchView('senior')" style="cursor:pointer"><td>${s.sup_emp_num}</td><td>${s.teamSize}</td><td>${s.avgRisk.toFixed(1)}</td><td>${(s.avgRisk * 2 + s.sblTotal * 0.3).toFixed(0)}</td><td><span class="tier-badge tier-${s.tier}">${s.tier.toUpperCase()}</span></td><td>${s.sblTotal}</td><td>${s.qualPct}%</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+        <div class="forecast-section">
+          <div class="forecast-title">📈 6-Month Base Forecast — ${vpBase}</div>
+          <div class="kpi-row" style="margin-bottom:24px;">
+            <div class="kpi-card forecast-kpi"><div class="kpi-value">${formatCost(proj6MonthCost)}</div><div class="kpi-label">Projected 6M Cost</div></div>
+            <div class="kpi-card forecast-kpi"><div class="kpi-value" style="color:var(--red)">${migration.willEscalate}</div><div class="kpi-label">Escalation Risk</div></div>
+            <div class="kpi-card forecast-kpi"><div class="kpi-value" style="color:var(--orange)">${bradAccel.length}</div><div class="kpi-label">Bradford Watch</div></div>
+          </div>
+          <div class="chart-card" style="margin-bottom:20px;position:relative;">
+            <div class="chart-title">Base Absence Trajectory</div>
+            <div style="position:absolute;top:16px;right:16px;display:flex;gap:16px;font-size:10px;z-index:10;">
+              <span><span style="display:inline-block;width:20px;height:3px;background:#3b82f6;vertical-align:middle;"></span> Historical</span>
+              <span><span style="display:inline-block;width:20px;height:3px;background:#6366f1;background: repeating-linear-gradient(90deg, #6366f1 0, #6366f1 6px, transparent 6px, transparent 9px);vertical-align:middle;"></span> Projected</span>
+              <span><span style="display:inline-block;width:2px;height:14px;background:var(--red);vertical-align:middle;"></span> Today</span>
+            </div>
+            <div class="chart-area"><canvas id="vpForecastChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Top 5 Escalation Risks</div>
+            <table class="data-table">
+              <thead><tr><th>Emp #</th><th>Position</th><th>Current Tier</th><th>H2 Absences</th><th>Projected 6M</th><th>Trend</th></tr></thead>
+              <tbody>${escalationRisks.map(r => `
+                <tr onclick="openEmployeeModalFromRow(${r.e.emp_num})" style="cursor:pointer">
+                  <td>${r.e.emp_num}</td>
+                  <td>${r.e.position}</td>
+                  <td><span class="tier-badge tier-${getTier(r.e.risk_score)}">${getTier(r.e.risk_score).toUpperCase()}</span></td>
+                  <td>${r.h2Total}</td>
+                  <td>${r.projTotal}</td>
+                  <td style="color:${parseInt(r.pctChange) > 0 ? 'var(--red)' : 'var(--green)'}">${parseInt(r.pctChange) > 0 ? '⬆' : '⬇'} ${Math.abs(parseInt(r.pctChange))}%</td>
+                </tr>
+              `).join('')}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        new Chart(document.getElementById('vpChart1'), {
+          type: 'doughnut',
+          data: { labels: Object.keys(positionCounts), datasets: [{ data: Object.values(positionCounts), backgroundColor: ['#6366f1', '#10b981', '#06b6d4', '#f59e0b', '#f97316', '#ef4444', '#8b5cf6'] }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
+        });
+
+        new Chart(document.getElementById('vpChart2'), {
+          type: 'bar',
+          data: { labels: topCodes.map(c => c[0]), datasets: [{ data: topCodes.map(c => c[1]), backgroundColor: '#3b82f6', borderRadius: 6 }] },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y: { grid: { color: 'transparent' }, ticks: { color: '#94a3b8', font: { size: 11 } } } } }
+        });
+
+        buildForecastChart('vpForecastChart', monthlyTrend, projected);
+      }, 50);
+    }
+
+    // ==================== SENIOR MANAGER VIEW ====================
+    let seniorSup = null;
+    let seniorTier = 'All';
+    let seniorBase = 'All';
+
+    function renderSenior() {
+      const div = document.getElementById('senior');
+      const allBases = [...new Set(supervisors.map(s => s.sup_base))].sort();
+      let filteredSups = supervisors;
+      if (seniorBase !== 'All') filteredSups = filteredSups.filter(s => s.sup_base === seniorBase);
+      if (seniorTier !== 'All') filteredSups = filteredSups.filter(s => s.tier === seniorTier);
+
+      const totalSups = filteredSups.length;
+      const criticalTeams = filteredSups.filter(s => s.tier === 'critical').length;
+      const avgTeamAbsences = (filteredSups.reduce((a, s) => a + s.total_absences, 0) / totalSups || 0).toFixed(1);
+      const totalSBL = filteredSups.reduce((a, s) => a + s.team_sbl_total, 0);
+      const avgQual = (filteredSups.reduce((a, s) => a + s.program_qualified_pct, 0) / totalSups || 0).toFixed(1);
+      const avgOversight = (filteredSups.reduce((a, s) => a + s.sup_risk_score, 0) / totalSups || 0).toFixed(1);
+
+      const topSupervisors = filteredSups.slice(0, 15).sort((a, b) => b.sup_risk_score - a.sup_risk_score);
+      const sortedSups = [...filteredSups].sort((a, b) => b.sup_risk_score - a.sup_risk_score);
+
+      let hrCards = [];
+      if (sortedSups[0]) {
+        const top = sortedSups[0];
+        if (top.sup_risk_score >= 100) hrCards.push({ cls: 'hr-card-urgent', title: 'Immediate Oversight Intervention', steps: 'MoM meeting within 24hrs, audit critical reports, validate Reasonable Doubt flags' });
+        const sblPct = top.team_sbl_total / (top.total_absences || 1);
+        const nspPct = top.team_nsp_total / (top.total_reports || 1);
+        if (sblPct > 0.15 || nspPct > 0.1) hrCards.push({ cls: 'hr-card-warning', title: 'Labour Relations Strategic Audit', steps: 'Audit pairing schedules vs sick calls, mandate medical certs' });
+        if (top.program_qualified_pct > 25) hrCards.push({ cls: 'hr-card-support', title: 'Proactive Support Program Scaling', steps: 'Batch enrollment letters, assign Attendance Coach' });
+        if (top.total_absences / top.total_reports > 5) hrCards.push({ cls: 'hr-card-info', title: 'Occupational Health & Wellness Review', steps: 'Review fatigue scores, investigate base-level factors' });
+        if (hrCards.length === 0) hrCards.push({ cls: 'hr-card-green', title: 'Maintenance of Standard Practices', steps: 'Team is within acceptable parameters' });
+      }
+
+      div.innerHTML = `
+        <div class="filter-bar">
+          <label>Base:</label>
+          <select class="filter-select" onchange="seniorBase=this.value;renderSenior()">
+            <option value="All">All Bases</option>
+            ${allBases.map(b => `<option value="${b}" ${seniorBase === b ? 'selected' : ''}>${b}</option>`).join('')}
+          </select>
+          <label style="margin-left:16px;">Tier:</label>
+          <select class="filter-select" onchange="seniorTier=this.value;renderSenior()">
+            <option value="All">All Tiers</option>
+            <option value="critical" ${seniorTier === 'critical' ? 'selected' : ''}>Critical</option>
+            <option value="high" ${seniorTier === 'high' ? 'selected' : ''}>High</option>
+            <option value="medium" ${seniorTier === 'medium' ? 'selected' : ''}>Medium</option>
+            <option value="low" ${seniorTier === 'low' ? 'selected' : ''}>Low</option>
+          </select>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-value">${totalSups}</div><div class="kpi-label">Total Supervisors</div></div>
+          <div class="kpi-card"><div class="kpi-value" style="color:var(--red)">${criticalTeams}</div><div class="kpi-label">Critical Teams</div></div>
+          <div class="kpi-card"><div class="kpi-value">${avgTeamAbsences}</div><div class="kpi-label">Avg Team Absences</div></div>
+          <div class="kpi-card"><div class="kpi-value">${totalSBL}</div><div class="kpi-label">Total SBL Events</div></div>
+          <div class="kpi-card"><div class="kpi-value">${avgQual}%</div><div class="kpi-label">% Qualified</div></div>
+          <div class="kpi-card"><div class="kpi-value">${avgOversight}</div><div class="kpi-label">Avg Oversight Score</div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card">
+            <div class="chart-title">Top 15 Riskiest Supervisors</div>
+            <div class="chart-area"><canvas id="seniorChart1"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Program Qualification by Supervisor</div>
+            <div class="chart-area"><canvas id="seniorChart2"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Full Supervisor Ranking</div>
+          <table class="data-table">
+            <thead><tr><th>Rank</th><th>Supervisor #</th><th>Base</th><th>Team Size</th><th>Avg Risk</th><th>Avg Bradford</th><th>Oversight Score</th><th>Tier</th><th>SBL Total</th><th>% Qualified</th></tr></thead>
+            <tbody>${sortedSups.map((s, i) => `<tr onclick="openSupervisorModal(supervisors.find(sup=>sup.sup_emp_num===${s.sup_emp_num}))" style="cursor:pointer"><td>${i + 1}</td><td>${s.sup_emp_num}</td><td>${s.sup_base}</td><td>${s.total_reports}</td><td>${s.avg_risk_score.toFixed(1)}</td><td>${s.avg_bradford.toFixed(0)}</td><td>${s.sup_risk_score.toFixed(0)}</td><td><span class="tier-badge tier-${s.tier}">${s.tier.toUpperCase()}</span></td><td>${s.team_sbl_total}</td><td>${s.program_qualified_pct.toFixed(0)}%</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+        ${hrCards.length > 0 ? `
+        <div class="chart-card">
+          <div class="chart-title">HR Recommendations — ${sortedSups[0]?.sup_emp_num || 'N/A'}</div>
+          ${hrCards.map(a => `<div class="hr-card ${a.cls}"><div class="hr-card-title">${a.title}</div><div class="hr-card-steps">${a.steps}</div></div>`).join('')}
+        </div>
+        ` : ''}
+      `;
+
+      setTimeout(() => {
+        new Chart(document.getElementById('seniorChart1'), {
+          type: 'bar',
+          data: { labels: topSupervisors.map(s => '#' + s.sup_emp_num), datasets: [{ data: topSupervisors.map(s => s.sup_risk_score), backgroundColor: topSupervisors.map(s => s.tier === 'critical' ? '#ef4444' : s.tier === 'high' ? '#f97316' : s.tier === 'medium' ? '#f59e0b' : '#10b981'), borderRadius: 6 }] },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y: { grid: { color: 'transparent' }, ticks: { color: '#94a3b8', font: { size: 10 } } } } }
+        });
+
+        new Chart(document.getElementById('seniorChart2'), {
+          type: 'bar',
+          data: { labels: filteredSups.map(s => '#' + s.sup_emp_num), datasets: [{ data: filteredSups.map(s => s.program_qualified_pct), backgroundColor: '#06b6d4', borderRadius: 6 }] },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { max: 100, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' } }, y: { grid: { color: 'transparent' }, ticks: { color: '#94a3b8', font: { size: 9 } } } } }
+        });
+      }, 50);
+    }
+
+    // ==================== SUPERVISOR VIEW ====================
+    let selectedSup = null;
+
+    function renderSupervisorView() {
+      const div = document.getElementById('supervisor');
+      const supNums = supervisors.map(s => s.sup_emp_num).sort((a, b) => a - b);
+      const sup = selectedSup ? supervisors.find(s => s.sup_emp_num === selectedSup) : null;
+      const team = sup ? sup.reports : [];
+
+      const avgRisk = team.length ? (team.reduce((a, e) => a + (e.risk_score || 0), 0) / team.length).toFixed(1) : 0;
+      const qualPct = team.length ? ((team.filter(e => e.attendance_program_qualified).length / team.length) * 100).toFixed(1) : 0;
+      const totalAbs = team.reduce((a, e) => a + (e.total_absences || 0), 0);
+      const avgBrad = team.length ? (team.reduce((a, e) => a + (e.bradford || 0), 0) / team.length).toFixed(0) : 0;
+      const teamSBL = team.reduce((a, e) => a + ((e.codes && e.codes.SBL) ? e.codes.SBL : 0), 0);
+
+      let critCount = 0, highCount = 0, medCount = 0, lowCount = 0;
+      team.forEach(e => {
+        const tier = getTier(e.risk_score || 0);
+        if (tier === 'critical') critCount++;
+        else if (tier === 'high') highCount++;
+        else if (tier === 'medium') medCount++;
+        else lowCount++;
+      });
+
+      const monthlyTotals = fleetMonthlyTotals(team);
+
+      const codeTotals = {};
+      team.forEach(e => {
+        if (e.codes) {
+          Object.entries(e.codes).forEach(([code, count]) => {
+            codeTotals[code] = (codeTotals[code] || 0) + count;
+          });
+        }
+      });
+      const codeEntries = Object.entries(codeTotals).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+
+      const mostSenior = team.length ? team.reduce((a, b) => (a.emp_num || 999999) < (b.emp_num || 999999) ? a : b) : null;
+      const mostJunior = team.length ? team.reduce((a, b) => (a.emp_num || 0) > (b.emp_num || 0) ? a : b) : null;
+
+      div.innerHTML = `
+        <div class="filter-bar">
+          <label>Supervisor:</label>
+          <select class="filter-select" onchange="selectedSup=parseInt(this.value);renderSupervisorView()">
+            <option value="">Select Supervisor</option>
+            ${supNums.map(n => `<option value="${n}" ${selectedSup === n ? 'selected' : ''}>#${n}</option>`).join('')}
+          </select>
+        </div>
+        ${sup ? `
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-value">${team.length}</div><div class="kpi-label">Direct Reports</div></div>
+          <div class="kpi-card"><div class="kpi-value">${avgRisk}</div><div class="kpi-label">Avg Risk Score</div></div>
+          <div class="kpi-card"><div class="kpi-value">${qualPct}%</div><div class="kpi-label">% Program Qualified</div></div>
+          <div class="kpi-card"><div class="kpi-value">${totalAbs}</div><div class="kpi-label">Total Team Absences</div></div>
+          <div class="kpi-card"><div class="kpi-value">${avgBrad}</div><div class="kpi-label">Avg Bradford</div></div>
+          <div class="kpi-card"><div class="kpi-value">${teamSBL}</div><div class="kpi-label">Team SBL Events</div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card">
+            <div class="chart-title">Monthly Team Absences</div>
+            <div class="chart-area"><canvas id="supViewChart1"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Risk Tier Distribution</div>
+            <div class="chart-area" style="display:flex;gap:12px;align-items:center;">
+              <div style="flex:1;text-align:center;padding:20px;background:#ef444420;border-radius:12px;border:1px solid #ef4444"><div style="font-size:24px;font-weight:800;color:var(--red)">${critCount}</div><div style="font-size:10px;color:var(--muted)">CRITICAL</div></div>
+              <div style="flex:1;text-align:center;padding:20px;background:#f9731620;border-radius:12px;border:1px solid #f97316"><div style="font-size:24px;font-weight:800;color:var(--orange)">${highCount}</div><div style="font-size:10px;color:var(--muted)">HIGH</div></div>
+              <div style="flex:1;text-align:center;padding:20px;background:#f59e0b20;border-radius:12px;border:1px solid #f59e0b"><div style="font-size:24px;font-weight:800;color:var(--amber)">${medCount}</div><div style="font-size:10px;color:var(--muted)">MEDIUM</div></div>
+              <div style="flex:1;text-align:center;padding:20px;background:#10b98120;border-radius:12px;border:1px solid #10b981"><div style="font-size:24px;font-weight:800;color:var(--green)">${lowCount}</div><div style="font-size:10px;color:var(--muted)">LOW</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Absence Code Breakdown</div>
+          <div class="code-grid">${codeEntries.map(([code, count]) => {
+        const pct = totalAbs > 0 ? ((count / totalAbs) * 100).toFixed(1) : 0;
+        return `<div class="code-card"><div class="code-card-value">${count}</div><div class="code-card-label">${code} (${pct}%)</div></div>`;
+      }).join('')}</div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Direct Reports — Sorted by Combined Score</div>
+          <table class="data-table">
+            <thead><tr><th>Emp #</th><th>Base</th><th>Position</th><th>Risk Score</th><th>Combined</th><th>Bradford</th><th>Program Status</th><th>Seniority</th></tr></thead>
+            <tbody>${team.sort((a, b) => (b.combined_score || 0) - (a.combined_score || 0)).map(e => `<tr onclick="openEmployeeModalFromRow(${e.emp_num})" style="cursor:pointer"><td>${e.emp_num}</td><td>${e.base}</td><td>${e.position}</td><td>${(e.risk_score || 0).toFixed(1)}</td><td>${(e.combined_score || 0).toFixed(1)}</td><td>${e.bradford}</td><td>${e.attendance_program_qualified ? '<span class="tier-badge tier-low">Qualified</span>' : '<span class="tier-badge tier-medium">Pending</span>'}</td><td>${e.emp_num < 10000 ? 'Senior' : e.emp_num < 50000 ? 'Mid' : 'Junior'}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Team Seniority Summary</div>
+          <div style="display:flex;gap:16px;">
+            <div style="flex:1;background:var(--bg-card2);padding:16px;border-radius:12px;text-align:center;">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Most Senior</div>
+              <div style="font-size:16px;font-weight:700;">#${mostSenior?.emp_num || 'N/A'}</div>
+              <div style="font-size:12px;color:var(--muted);">${mostSenior?.base || ''} · ${mostSenior?.position || ''}</div>
+            </div>
+            <div style="flex:1;background:var(--bg-card2);padding:16px;border-radius:12px;text-align:center;">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Most Junior</div>
+              <div style="font-size:16px;font-weight:700;">#${mostJunior?.emp_num || 'N/A'}</div>
+              <div style="font-size:12px;color:var(--muted);">${mostJunior?.base || ''} · ${mostJunior?.position || ''}</div>
+            </div>
+          </div>
+        </div>
+        ` : '<div class="loading">Select a supervisor to view team details</div>'}
+      `;
+
+      if (sup) {
+        setTimeout(() => {
+          new Chart(document.getElementById('supViewChart1'), {
+            type: 'line',
+            data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], datasets: [{ data: monthlyTotals, borderColor: '#3b82f6', backgroundColor: '#3b82f620', fill: true, tension: 0.4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } } } }
+          });
+        }, 50);
+      }
+    }
+
+    // ==================== DATA LOAD ====================
+    fetch('dashboard_data.json?v=' + new Date().getTime())
+      .then(r => r.json())
+      .then(data => {
+        employees = data.employees || data;
+        supervisors = buildSupervisorData(employees);
+        renderExecutive();
+      })
+      .catch(err => {
+        console.error('Failed to load data:', err);
+        document.querySelector('.main').innerHTML = '<div class="loading">Failed to load data. Make sure dashboard_data.json is in the same directory.</div>';
+      });
+  </script>
+</body>
+
+</html>
