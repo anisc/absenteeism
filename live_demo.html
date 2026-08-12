@@ -280,10 +280,7 @@
   </nav>
 
   <div class="top-right">
-    <div class="chip"><span class="live-dot"></span>Guided Demo · 2–3 min</div>
     <div class="chip">Step <b id="stepNum">0</b>/<span id="stepTot">9</span></div>
-    <div class="timer">⏱ <span id="timer">0:00</span> <span style="color:#475569;">/ ~2:30</span></div>
-    <button class="notes-toggle" id="notesToggle">🎙 Presenter notes</button>
   </div>
 </header>
 
@@ -788,20 +785,6 @@
       '4. Manager check-in within 7 days; 30-day follow-up.\n' +
       '5. Offer EAP / wellness support — no discipline step at this stage.';
   })();
-
-  // ── PRESENTER NOTES TOGGLE ────────────
-  document.getElementById('notesToggle').addEventListener('click', function() {
-    document.body.classList.toggle('notes');
-    this.classList.toggle('on');
-  });
-
-  // ── TIMER ─────────────────────────────
-  let t0 = Date.now();
-  setInterval(() => {
-    const s = Math.floor((Date.now() - t0) / 1000);
-    const m = Math.floor(s / 60), ss = s % 60;
-    document.getElementById('timer').textContent = m + ':' + String(ss).padStart(2, '0');
-  }, 500);
 
   // animate initial pane bars
   animateBars(document.getElementById('exec-ovs'));
