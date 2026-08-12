@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Demo — Crew Absenteeism AI · Executive · VP · Employee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #04060f;
+    --bg2:     #080d1a;
+    --bg3:     #0c1120;
+    --card:    #0e1526;
+    --border:  rgba(255,255,255,0.07);
+    --blue:    #3b82f6;
+    --indigo:  #6366f1;
+    --cyan:    #06b6d4;
+    --green:   #10b981;
+    --amber:   #f59e0b;
+    --red:     #ef4444;
+    --text:    #f0f4ff;
+    --muted:   #64748b;
+    --dim:     #1e293b;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    height: 64px;
+    display: flex; align-items: center; gap: 24px;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,13,26,0.7);
+    position: relative; z-index: 50;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .brand .logo {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: linear-gradient(135deg,#3b82f6,#6366f1);
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+  }
+  .brand .bt { font-size: 13px; font-weight: 800; letter-spacing: -0.2px; }
+  .brand .bs { font-size: 10.5px; color: var(--muted); font-weight: 500; }
+
+  .tabs {
+    display: flex; gap: 6px;
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 4px; border-radius: 14px; flex-shrink: 0;
+  }
+  .tab {
+    border: none; cursor: pointer; font-family: inherit;
+    font-size: 12.5px; font-weight: 700;
+    padding: 9px 20px; border-radius: 10px;
+    background: transparent; color: var(--muted);
+    transition: all .2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: linear-gradient(135deg,#3b82f6,#6366f1); color: #fff; }
+
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .chip {
+    font-size: 11.5px; font-weight: 700; color: #93c5fd;
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+    padding: 7px 14px; border-radius: 100px; white-space: nowrap;
+  }
+  .chip .live-dot { margin-right: 6px; }
+  .timer { font-size: 11.5px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .notes-toggle {
+    cursor: pointer; font-family: inherit; font-size: 11.5px; font-weight: 700;
+    color: var(--muted); background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); padding: 7px 14px; border-radius: 100px;
+    transition: all .2s;
+  }
+  .notes-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .notes-toggle.on { color: #fbbf24; border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+
+  /* ── STAGE ── */
+  .stage { height: calc(100% - 64px); position: relative; }
+  .view {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 290px 1fr; gap: 20px;
+    padding: 22px 26px;
+    opacity: 0; pointer-events: none; transform: translateX(24px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .rail, .panel { min-width: 0; }
+  .pane { overflow-x: hidden; }
+  .view.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+
+  /* ── RAIL ── */
+  .rail {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 6px;
+  }
+  .rail-title { font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 4px 6px 8px; }
+  .hot {
+    cursor: pointer; font-family: inherit; text-align: left;
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 13px; padding: 14px 16px;
+    font-size: 13px; font-weight: 700; color: #cbd5e1;
+    transition: all .2s;
+    position: relative;
+  }
+  .hot .hi { font-size: 17px; flex-shrink: 0; }
+  .hot .hd { font-size: 10.5px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+  .hot:hover { border-color: rgba(59,130,246,0.4); transform: translateX(3px); }
+  .hot.active { border-color: rgba(59,130,246,0.55); background: rgba(59,130,246,0.10); color: #fff; }
+  .hot.active .hd { color: #93c5fd; }
+  .hot .stepno {
+    margin-left: auto; font-size: 10px; font-weight: 800; color: var(--dim);
+    background: rgba(255,255,255,0.05); border-radius: 100px; padding: 3px 9px;
+  }
+  .hot.active .stepno { color: #93c5fd; background: rgba(59,130,246,0.2); }
+  .rail-hint { font-size: 10.5px; color: #475569; margin-top: 8px; padding: 0 6px; line-height: 1.5; }
+
+  /* ── PANEL ── */
+  .panel { position: relative; min-height: 0; }
+  .pane {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column; gap: 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 30px;
+    overflow-y: auto;
+  }
+  .pane.active { display: flex; animation: fadeUp .35s ease both; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .pane-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .pane-sub { font-size: 12.5px; color: var(--muted); margin-top: -8px; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+    color: #93c5fd; margin-bottom: 4px;
+  }
+  .eyebrow::before { content: ''; width: 22px; height: 2px; background: var(--blue); border-radius: 1px; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .kpi {
+    background: var(--card); border: 1px solid var(--border); border-radius: 13px;
+    padding: 14px 16px;
+  }
+  .kpi .kl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; }
+  .kpi .kv { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
+  .kpi .ks { font-size: 10.5px; color: #475569; margin-top: 4px; }
+  .k-blue  .kv { color: #60a5fa; } .k-red .kv { color: #f87171; }
+  .k-amber .kv { color: #fbbf24; } .k-green .kv { color: #34d399; }
+  .k-cyan  .kv { color: #67e8f9; } .k-pink  .kv { color: #f472b6; }
+  .k-indigo .kv { color: #a5b4fc; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  .card h4 { font-size: 12px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .big-num { font-size: 30px; font-weight: 900; letter-spacing: -1px; }
+  .big-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .bar-row .bl { width: 46px; font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-align: right; }
+  .bar-row .btrack { flex: 1; height: 22px; background: rgba(255,255,255,0.04); border-radius: 6px; overflow: hidden; }
+  .bar-row .bfill { height: 100%; border-radius: 6px; width: 0; transition: width .8s cubic-bezier(.16,1,.3,1); }
+  .bar-row .bv { width: 60px; font-size: 11px; color: var(--muted); font-weight: 600; }
+
+  .bars { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding-top: 8px; }
+  .bars .bc { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
+  .bars .bc .bt { width: 100%; max-width: 34px; background: rgba(99,102,241,0.35); border-radius: 5px 5px 0 0; height: 0; transition: height .8s cubic-bezier(.16,1,.3,1); position: relative; }
+  .bars .bc .bt .bval { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #a5b4fc; font-weight: 700; }
+  .bars .bc .bt.hl { background: linear-gradient(180deg,#3b82f6,#6366f1); box-shadow: 0 0 18px rgba(59,130,246,0.35); }
+  .bars .bc .blb { font-size: 9.5px; color: var(--muted); font-weight: 600; }
+
+  .donut { width: 130px; height: 130px; border-radius: 50%; position: relative; }
+  .donut .donut-center {
+    position: absolute; inset: 22px; border-radius: 50%; background: var(--bg2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .donut .donut-center .dv { font-size: 17px; font-weight: 900; }
+  .donut .donut-center .dl { font-size: 8.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .legend { display: flex; flex-direction: column; gap: 7px; }
+  .legend .li { display: flex; align-items: center; gap: 9px; font-size: 11.5px; color: #cbd5e1; }
+  .legend .li .sw { width: 10px; height: 10px; border-radius: 3px; }
+  .legend .li .lv { margin-left: auto; font-weight: 800; color: var(--text); }
+
+  .ai-box {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 13px; padding: 13px 16px;
+  }
+  .ai-box .ab-label { font-size: 10px; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
+  .ai-box .ab-q { flex: 1; font-size: 13.5px; font-weight: 600; color: #e2e8f0; }
+  .ai-btn {
+    cursor: pointer; font-family: inherit; font-weight: 700; font-size: 12.5px;
+    padding: 9px 20px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg,#3b82f6,#6366f1); color: #fff;
+    transition: opacity .2s;
+  }
+  .ai-btn:hover { opacity: 0.9; }
+  .ai-btn:disabled { opacity: 0.45; cursor: default; }
+
+  .ai-answer {
+    display: none;
+    background: var(--card); border: 1px solid rgba(16,185,129,0.25); border-radius: 13px;
+    padding: 16px 20px;
+  }
+  .ai-answer.show { display: block; }
+  .ai-answer .aa-head { font-size: 10px; font-weight: 800; color: #6ee7b7; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .ai-answer pre { font-family: 'Inter', sans-serif; font-size: 12.5px; line-height: 1.7; color: #cbd5e1; white-space: pre-wrap; }
+  .ai-answer pre b { color: #fbbf24; }
+  .typing::after { content: '▍'; color: #6ee7b7; animation: blink 1s step-end infinite; }
+
+  .note {
+    display: none;
+    font-size: 11.5px; color: #475569; font-style: italic;
+    border-left: 2px solid var(--dim); padding: 6px 12px; margin-top: 2px;
+    line-height: 1.6;
+  }
+  body.notes .note { display: block; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 100px; border: 1px solid; }
+  .pill-red   { color: #fca5a5; background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.35); }
+  .pill-green { color: #6ee7b7; background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.35); }
+  .pill-amber { color: #fcd34d; background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.35); }
+  .pill-blue  { color: #93c5fd; background: rgba(59,130,246,0.1);  border-color: rgba(59,130,246,0.35); }
+
+  .mini-list { list-style: none; }
+  .mini-list li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12.5px; color: #cbd5e1; line-height: 1.5; }
+  .mini-list li:last-child { border-bottom: none; }
+  .mini-list li .mi { font-size: 15px; flex-shrink: 0; }
+
+  .vs-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; }
+  .vs-chip { display: flex; align-items: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; color: var(--muted); }
+
+  .compare-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 14px; }
+  .stat-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 5px; }
+  .stat-v { font-size: 21px; font-weight: 900; letter-spacing: -1px; }
+
+  .watch-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
+  .watch-row:last-child { border-bottom: none; }
+  .watch-row .wn { font-weight: 800; color: #e2e8f0; min-width: 58px; }
+  .watch-row .wb { color: var(--muted); min-width: 74px; }
+  .watch-row .wv { margin-left: auto; font-weight: 800; }
+
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 1.8s ease infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">✈</div>
+    <div>
+      <div class="bt">Live Demo · Crew Absenteeism AI</div>
+      <div class="bs">FY 2025 · WestJet Crew Operations</div>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-view="exec">🧑‍💼 Executive</button>
+    <button class="tab" data-view="vp">👔 VP</button>
+    <button class="tab" data-view="emp">👤 Employee</button>
+  </nav>
+
+  <div class="top-right">
+    <div class="chip"><span class="live-dot"></span>Guided Demo · 2–3 min</div>
+    <div class="chip">Step <b id="stepNum">0</b>/<span id="stepTot">9</span></div>
+    <div class="timer">⏱ <span id="timer">0:00</span> <span style="color:#475569;">/ ~2:30</span></div>
+    <button class="notes-toggle" id="notesToggle">🎙 Presenter notes</button>
+  </div>
+</header>
+
+<main class="stage">
+
+  <!-- ═══════════════ EXECUTIVE ═══════════════ -->
+  <section class="view active" id="view-exec">
+    <aside class="rail">
+      <div class="rail-title">Executive · click to drill in</div>
+      <button class="hot" data-panel="exec-ovs">
+        <span class="hi">🏢</span>
+        <span>Corporate Oversight<small class="hd">Fleet health at a glance</small></span>
+        <span class="stepno">1</span>
+      </button>
+      <button class="hot" data-panel="exec-dollars">
+        <span class="hi">💰</span>
+        <span>Financial Impact<small class="hd">Absence in dollars</small></span>
+        <span class="stepno">2</span>
+      </button>
+      <button class="hot" data-panel="exec-dist">
+        <span class="hi">🗺️</span>
+        <span>Department Distribution<small class="hd">Where it concentrates</small></span>
+        <span class="stepno">3</span>
+      </button>
+      <button class="hot" data-panel="exec-ai">
+        <span class="hi">🤖</span>
+        <span>Ask AI — "Why here?"<small class="hd">Agent answers with data + policy</small></span>
+        <span class="stepno">4</span>
+      </button>
+      <div class="rail-hint">Presenter: click each card top-to-bottom. Keep to ~45 seconds.</div>
+    </aside>
+
+    <div class="panel">
+      <!-- 1. Corporate oversight -->
+      <div class="pane active" id="exec-ovs">
+        <div class="eyebrow">Corporate Oversight</div>
+        <div class="pane-title">Fleet absence health, one screen</div>
+        <div class="pane-sub">Live aggregates from the FY2025 absence dataset.</div>
+
+        <div class="kpi-row">
+          <div class="kpi k-blue"><div class="kl">Crew Members</div><div class="kv">7,243</div><div class="ks">WS / WR operations</div></div>
+          <div class="kpi k-red"><div class="kl">Absence Events</div><div class="kv">100,708</div><div class="ks">FY2025 · avg 13.9 / crew</div></div>
+          <div class="kpi k-amber"><div class="kl">Critical Risk Crew</div><div class="kv">88</div><div class="ks">risk score ≥ 150</div></div>
+          <div class="kpi k-green"><div class="kl">Avg Risk Score</div><div class="kv">49</div><div class="ks">median 44.7</div></div>
+          <div class="kpi k-cyan"><div class="kl">No-Shows (NSP)</div><div class="kv">907</div><div class="ks">highest severity code</div></div>
+          <div class="kpi k-pink"><div class="kl">Late Arrivals (LAA)</div><div class="kv">1,088</div><div class="ks">punctuality events</div></div>
+          <div class="kpi k-indigo"><div class="kl">Avg Bradford</div><div class="kv">1,586</div><div class="ks">fleet-wide index</div></div>
+          <div class="kpi k-blue"><div class="kl">In Support Program</div><div class="kv">4,684</div><div class="ks">1,067 proactive</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>🎯 Risk Bands</h4>
+            <div class="bar-row"><div class="bl">Critical</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#ef4444,#f97316);width:0" data-w="16%"></div></div><div class="bv">88 crew</div></div>
+            <div class="bar-row"><div class="bl">High</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#f59e0b,#f97316);width:0" data-w="26%"></div></div><div class="bv">361 crew</div></div>
+            <div class="bar-row"><div class="bl">Medium</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#facc15,#f59e0b);width:0" data-w="100%"></div></div><div class="bv">2,636 crew</div></div>
+            <div class="bar-row"><div class="bl">Low</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#34d399,#06b6d4);width:0" data-w="78%"></div></div><div class="bv">4,158 crew</div></div>
+          </div>
+          <div class="card">
+            <h4>📈 Absence Trend — 2025</h4>
+            <div class="bars" id="trendFleet"></div>
+            <div style="font-size:10.5px;color:#475569;margin-top:10px;">December +51% vs November — seasonal peak. Sick time (SCK) = <b style="color:#93c5fd;">69%</b> of all events.</div>
+          </div>
+        </div>
+
+        <div class="note">"7,243 crew, ~101K absence events. 88 crew already at critical risk — and the year ended on a 51% month-over-month spike. This is the pattern the AI watches continuously."</div>
+      </div>
+
+      <!-- 2. Dollars -->
+      <div class="pane" id="exec-dollars">
+        <div class="eyebrow">Financial Impact</div>
+        <div class="pane-title">Absence in dollars, not just days</div>
+        <div class="pane-sub">Illustrative model · average crew-day cost ≈ $315 (pay continuation + replacement).</div>
+
+        <div class="kpi-row">
+          <div class="kpi k-red"><div class="kl">Est. Annual Cost</div><div class="kv">$31.7M</div><div class="ks">100,708 absence events</div></div>
+          <div class="kpi k-amber"><div class="kl">Replacement & Overtime</div><div class="kv">$14.6M</div><div class="ks">46% of cost · coverage gap</div></div>
+          <div class="kpi k-blue"><div class="kl">Pay Continuation</div><div class="kv">$10.8M</div><div class="ks">34% · sick & paid leave</div></div>
+          <div class="kpi k-green"><div class="kl">Potentially Avoidable</div><div class="kv">~$11M</div><div class="ks">≈35% · with proactive support</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>🗺️ Cost by Base</h4>
+            <div class="bar-row"><div class="bl">YYC</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#3b82f6,#6366f1);width:0" data-w="100%"></div></div><div class="bv">$13.3M · 42%</div></div>
+            <div class="bar-row"><div class="bl">YYZ</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#6366f1,#8b5cf6);width:0" data-w="61%"></div></div><div class="bv">$8.2M · 26%</div></div>
+            <div class="bar-row"><div class="bl">YVR</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#06b6d4,#3b82f6);width:0" data-w="36%"></div></div><div class="bv">$4.8M · 15%</div></div>
+            <div class="bar-row"><div class="bl">Other</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#94a3b8,#64748b);width:0" data-w="33%"></div></div><div class="bv">$5.4M · 17%</div></div>
+          </div>
+          <div class="card">
+            <h4>📊 What Drives the Cost</h4>
+            <div class="bar-row"><div class="bl">Sick</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#ef4444,#f97316);width:0" data-w="100%"></div></div><div class="bv">69% SCK</div></div>
+            <div class="bar-row"><div class="bl">No-Show</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#f59e0b,#f97316);width:0" data-w="2.2%"></div></div><div class="bv">907 NSP</div></div>
+            <div class="bar-row"><div class="bl">Late</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#facc15,#f59e0b);width:0" data-w="2.7%"></div></div><div class="bv">1,088 LAA</div></div>
+            <div class="bar-row"><div class="bl">Other</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#34d399,#06b6d4);width:0" data-w="30%"></div></div><div class="bv">rest</div></div>
+            <div style="font-size:10.5px;color:#475569;margin-top:12px;">Sick time dominates — that's where prevention pays back.</div>
+          </div>
+        </div>
+
+        <div class="note">"Executive takeaway: ~$31.7M per year, and we estimate about a third is avoidable with earlier, proactive support — not punishment. Two bases, YYC and YYZ, represent two-thirds of the dollar exposure."</div>
+      </div>
+
+      <!-- 3. Distribution -->
+      <div class="pane" id="exec-dist">
+        <div class="eyebrow">Department Distribution</div>
+        <div class="pane-title">Absence concentrates fast</div>
+        <div class="pane-sub">Share of total absence events by base and crew group.</div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>🗺️ By Base</h4>
+            <div class="bar-row"><div class="bl">YYC</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#3b82f6,#6366f1);width:0" data-w="100%"></div></div><div class="bv">42%</div></div>
+            <div class="bar-row"><div class="bl">YYZ</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#6366f1,#8b5cf6);width:0" data-w="62%"></div></div><div class="bv">26%</div></div>
+            <div class="bar-row"><div class="bl">YVR</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#06b6d4,#3b82f6);width:0" data-w="36%"></div></div><div class="bv">15%</div></div>
+            <div class="bar-row"><div class="bl">YEG</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#f59e0b,#f97316);width:0" data-w="17%"></div></div><div class="bv">7%</div></div>
+            <div class="bar-row"><div class="bl">YWG</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#facc15,#f59e0b);width:0" data-w="14%"></div></div><div class="bv">6%</div></div>
+            <div class="bar-row"><div class="bl">Other</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#94a3b8,#64748b);width:0" data-w="12%"></div></div><div class="bv">5%</div></div>
+          </div>
+          <div class="card" style="display:flex;flex-direction:column;gap:18px;">
+            <h4>👥 By Crew Group</h4>
+            <div style="display:flex;align-items:center;gap:22px;">
+              <div class="donut" style="background:conic-gradient(#3b82f6 0 64%, #06b6d4 64% 78%, #8b5cf6 78% 92%, #64748b 92% 100%);">
+                <div class="donut-center"><div class="dv">FA 64%</div><div class="dl">of events</div></div>
+              </div>
+              <div class="legend">
+                <div class="li"><span class="sw" style="background:#3b82f6"></span>Flight Attendants <span class="lv">64%</span></div>
+                <div class="li"><span class="sw" style="background:#06b6d4"></span>First Officers <span class="lv">14%</span></div>
+                <div class="li"><span class="sw" style="background:#8b5cf6"></span>Captains <span class="lv">13%</span></div>
+                <div class="li"><span class="sw" style="background:#64748b"></span>Others <span class="lv">9%</span></div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:#475569;line-height:1.6;">Flight attendants carry <b style="color:#93c5fd;">64%</b> of absence volume — the largest lever in the network.</div>
+          </div>
+        </div>
+
+        <div class="note">"Absence is not evenly spread. Two bases are 68% of it, and flight attendants are 64%. So targeted action in YYC + YYZ, focused on FA crews, covers most of the problem."</div>
+      </div>
+
+      <!-- 4. AI -->
+      <div class="pane" id="exec-ai">
+        <div class="eyebrow">AI Agent</div>
+        <div class="pane-title">Ask the agent: "Why here?"</div>
+        <div class="pane-sub">Natural-language answers backed by data and policy — pre-loaded for the demo.</div>
+
+        <div class="ai-box">
+          <span class="ab-label">Ask AI</span>
+          <span class="ab-q">Why is absenteeism so high in YYC?</span>
+          <button class="ai-btn" id="execAskBtn">Ask</button>
+        </div>
+
+        <div class="ai-answer" id="execAnswer">
+          <div class="aa-head">🤖 AI Adviser · grounded in FY2025 crew data &amp; policy</div>
+          <pre id="execResponse"></pre>
+        </div>
+
+        <div class="note">"This is the moment that makes it feel like a product — type any 'why here' question, and the agent turns data into an answer with a recommended action."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ VP ═══════════════ -->
+  <section class="view" id="view-vp">
+    <aside class="rail">
+      <div class="rail-title">VP / Manager · click to drill in</div>
+      <button class="hot" data-panel="vp-insight">
+        <span class="hi">👔</span>
+        <span>VP Insight<small class="hd">One page your VPs actually use</small></span>
+        <span class="stepno">5</span>
+      </button>
+      <button class="hot" data-panel="vp-ai">
+        <span class="hi">🤖</span>
+        <span>Ask AI — "Where first?"<small class="hd">Agent prioritizes the action</small></span>
+        <span class="stepno">6</span>
+      </button>
+      <div class="rail-hint">Presenter: one VP insight, then one agent question. ~30 seconds.</div>
+    </aside>
+
+    <div class="panel">
+      <div class="pane active" id="vp-insight">
+        <div class="eyebrow">VP Insight</div>
+        <div class="pane-title">Inflight Operations — December Brief</div>
+        <div class="pane-sub">Auto-generated for the VP · What happened · what's next · what to do.</div>
+
+        <div class="card" style="border-left:3px solid var(--amber);padding:16px 20px;">
+          <div style="font-size:12.5px;font-weight:700;color:#fcd34d;margin-bottom:4px;">⚠ Headline Insight</div>
+          <div style="font-size:13px;color:#e2e8f0;line-height:1.6;">Absence hit a <b>record December</b> (+51% MoM) driven by sick time and holiday travel coverage gaps — concentrated in <b>YYC</b> and <b>YVR</b> FA crews.</div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi k-red"><div class="kl">Dec Absence Events</div><div class="kv">11,519</div><div class="ks">+51% vs Nov · record month</div></div>
+          <div class="kpi k-amber"><div class="kl">Critical Risk Crew</div><div class="kv">88</div><div class="ks">19 YYC · 11 YVR · 45 YYZ</div></div>
+          <div class="kpi k-blue"><div class="kl">FA Share</div><div class="kv">64%</div><div class="ks">of all absence events</div></div>
+          <div class="kpi k-cyan"><div class="kl">SCK (Sick)</div><div class="kv">8,216</div><div class="ks">Dec · 71% of events</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>📈 Fleet Absence Trend</h4>
+            <div class="bars" id="trendVp"></div>
+            <div style="font-size:10.5px;color:#475569;margin-top:10px;">Seasonal pattern: summer (Jul–Aug) and December are structural peaks.</div>
+          </div>
+          <div class="card">
+            <h4>🚨 Top-Risk Crew Watchlist</h4>
+            <div class="watch-row"><span class="wn">#4464</span><span class="wb">YVR · FA</span><span class="wv" style="color:#f87171;">Bradford 70,560</span></div>
+            <div class="watch-row"><span class="wn">#747</span><span class="wb">YEG · FA</span><span class="wv" style="color:#f87171;">Bradford 60,112</span></div>
+            <div class="watch-row"><span class="wn">#2129</span><span class="wb">YYZ · FA</span><span class="wv" style="color:#f87171;">Bradford 37,500</span></div>
+            <div class="watch-row"><span class="wn">#5484</span><span class="wb">YWG · FA</span><span class="wv" style="color:#f87171;">Bradford 26,979</span></div>
+            <div style="font-size:10.5px;color:#475569;margin-top:10px;">Top crew already qualify for the Reactive Attendance Program (12-Month Rule).</div>
+          </div>
+        </div>
+
+        <div class="card" style="border-left:3px solid var(--green);padding:16px 20px;">
+          <div style="font-size:12.5px;font-weight:700;color:#6ee7b7;margin-bottom:6px;">✅ Recommended Actions</div>
+          <div class="mini-list">
+            <li><span class="mi">🎯</span><div><b>Brief managers in YYC (19) and YVR (11)</b> on their critical-risk crew before the next crew pairing cycle.</div></li>
+            <li><span class="mi">📞</span><div>Run proactive outreach to the top-20 crew — support first, no discipline.</div></li>
+            <li><span class="mi">📅</span><div>Review December scheduling &amp; overtime against the sick-time spike.</div></li>
+          </div>
+        </div>
+
+        <div class="note">"The VP doesn't open a 10-tab dashboard. They get one brief: record December, where it's concentrated, and exactly three actions."</div>
+      </div>
+
+      <div class="pane" id="vp-ai">
+        <div class="eyebrow">AI Agent</div>
+        <div class="pane-title">VP-level prioritization</div>
+        <div class="pane-sub">Same agent, asked the question a VP actually asks.</div>
+
+        <div class="ai-box">
+          <span class="ab-label">Ask AI</span>
+          <span class="ab-q">Which base should I focus on first?</span>
+          <button class="ai-btn" id="vpAskBtn">Ask</button>
+        </div>
+
+        <div class="ai-answer" id="vpAnswer">
+          <div class="aa-head">🤖 AI Adviser · ranking by cost × risk × readiness</div>
+          <pre id="vpResponse"></pre>
+        </div>
+
+        <div class="note">"The agent ranks bases — it says start YYC, and gives the manager a concrete first action. That's decision support, not another report."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ EMPLOYEE ═══════════════ -->
+  <section class="view" id="view-emp">
+    <aside class="rail">
+      <div class="rail-title">Employee · click to drill in</div>
+      <button class="hot" data-panel="emp-profile">
+        <span class="hi">👤</span>
+        <span>Employee Profile<small class="hd">Single view of a crew member</small></span>
+        <span class="stepno">7</span>
+      </button>
+      <button class="hot" data-panel="emp-trends">
+        <span class="hi">📈</span>
+        <span>Trends & Pattern<small class="hd">What's actually happening</small></span>
+        <span class="stepno">8</span>
+      </button>
+      <button class="hot" data-panel="emp-rec">
+        <span class="hi">💡</span>
+        <span>AI Recommendation<small class="hd">What to do next</small></span>
+        <span class="stepno">9</span>
+      </button>
+      <div class="rail-hint">Presenter: profile → trends → recommendation. ~45 seconds.</div>
+    </aside>
+
+    <div class="panel">
+      <div class="pane active" id="emp-profile">
+        <div class="eyebrow">Employee Profile</div>
+        <div class="pane-title">Highest-risk crew member — fleet-wide</div>
+        <div class="pane-sub">Auto-assembled profile · every field from source data.</div>
+
+        <div class="card" style="display:flex;align-items:center;gap:18px;padding:20px 22px;">
+          <div style="width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,#ef4444,#f97316);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👤</div>
+          <div style="flex:1;">
+            <div style="font-size:17px;font-weight:800;">Employee #4464</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">YVR · Flight Attendant · Full-time</div>
+          </div>
+          <span class="pill pill-red">⚠ Critical Risk</span>
+          <span class="pill pill-amber">Reactive Program</span>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi k-red"><div class="kl">Risk Score</div><div class="kv">382.6</div><div class="ks">fleet #1 · ≥150 = critical</div></div>
+          <div class="kpi k-red"><div class="kl">Bradford Index</div><div class="kv">70,560</div><div class="ks">extreme · review threshold</div></div>
+          <div class="kpi k-amber"><div class="kl">Absence Events</div><div class="kv">94</div><div class="ks">FY2025 · 52 sick · 35 unsched</div></div>
+          <div class="kpi k-green"><div class="kl">Best Performer</div><div class="kv">#4637</div><div class="ks">1 absence · Bradford 1</div></div>
+        </div>
+
+        <div class="vs-row">
+          <div class="card" style="border-left:3px solid var(--red);">
+            <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#fca5a5;text-transform:uppercase;margin-bottom:8px;">⚠ This crew member</div>
+            <div class="mini-list">
+              <li><span class="mi">🤒</span><div>52 sick (SCK) events — an <b>SCK-heavy pattern</b> every month</div></li>
+              <li><span class="mi">🚫</span><div>35 unscheduled absences (UAV) — spikes in Aug–Sep</div></li>
+              <li><span class="mi">⚠️</span><div>Qualified for 12-Month Rule → <b>Reactive</b> program</div></li>
+            </div>
+          </div>
+          <div class="vs-chip">vs</div>
+          <div class="card" style="border-left:3px solid var(--green);">
+            <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#6ee7b7;text-transform:uppercase;margin-bottom:8px;">★ Benchmark crew</div>
+            <div class="mini-list">
+              <li><span class="mi">✅</span><div>1 absence all year (PDP)</div></li>
+              <li><span class="mi">🧊</span><div>Bradford 1 · risk score 1.0</div></li>
+              <li><span class="mi">🎖️</span><div>No program intervention needed</div></li>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">"Every employee has one profile — current risk, Bradford, patterns, program status. This is the same record HR and the manager see."</div>
+      </div>
+
+      <div class="pane" id="emp-trends">
+        <div class="eyebrow">Trends & Pattern</div>
+        <div class="pane-title">#4464 — 12-month pattern</div>
+        <div class="pane-sub">Monthly sick (SCK) and unscheduled (UAV) events.</div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>📅 Monthly Events</h4>
+            <div class="bars" id="empBars" style="height:170px;"></div>
+            <div style="display:flex;gap:16px;margin-top:12px;">
+              <span class="pill pill-blue">SCK · sick</span>
+              <span class="pill pill-red">UAV · unscheduled</span>
+            </div>
+          </div>
+          <div class="card">
+            <h4>🧩 Absence Code Mix</h4>
+            <div class="bar-row"><div class="bl">SCK</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#3b82f6,#6366f1);width:0" data-w="100%"></div></div><div class="bv">52 events</div></div>
+            <div class="bar-row"><div class="bl">UAV</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#ef4444,#f97316);width:0" data-w="67%"></div></div><div class="bv">35 events</div></div>
+            <div class="bar-row"><div class="bl">LSK</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#f59e0b,#f97316);width:0" data-w="8%"></div></div><div class="bv">4 events</div></div>
+            <div class="bar-row"><div class="bl">PDP</div><div class="btrack"><div class="bfill" style="background:linear-gradient(90deg,#facc15,#f59e0b);width:0" data-w="6%"></div></div><div class="bv">3 events</div></div>
+            <div style="font-size:10.5px;color:#475569;margin-top:12px;">Recurring SCK with UAV bursts — a pattern worth understanding, not punishing.</div>
+          </div>
+        </div>
+
+        <div class="card" style="border-left:3px solid var(--amber);">
+          <div style="font-size:11px;font-weight:800;color:#fcd34d;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">🔎 What the pattern says</div>
+          <div style="font-size:12.5px;color:#e2e8f0;line-height:1.7;">SCK is present <b>10 of 12 months</b> — a persistent health pattern rather than isolated incidents. UAV concentrates in Aug–Sep, pointing to fatigue or scheduling stress after the summer push. Bradford 70,560 is 44× the fleet average.</div>
+        </div>
+
+        <div class="note">"The AI turns the raw calendar into a hypothesis: persistent sick pattern plus a fatigue spike — which drives what we recommend next."</div>
+      </div>
+
+      <div class="pane" id="emp-rec">
+        <div class="eyebrow">AI Recommendation</div>
+        <div class="pane-title">What to do next — support first</div>
+        <div class="pane-sub">Recommended next action for #4464, grounded in policy and pattern.</div>
+
+        <div class="grid-3">
+          <div class="card" style="border-top:2px solid #ef4444;">
+            <div style="font-size:11px;font-weight:800;color:#f87171;margin-bottom:6px;">1 · Health</div>
+            <div style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">Refer to <b>Occupational Health</b> — 52 sick events suggest an underlying medical condition needing assessment.</div>
+          </div>
+          <div class="card" style="border-top:2px solid #f59e0b;">
+            <div style="font-size:11px;font-weight:800;color:#fbbf24;margin-bottom:6px;">2 · Scheduling</div>
+            <div style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">Review <b>Aug–Sep UAV cluster</b> — fatigue / pairing load. Adjust scheduling before the next peak.</div>
+          </div>
+          <div class="card" style="border-top:2px solid #3b82f6;">
+            <div style="font-size:11px;font-weight:800;color:#60a5fa;margin-bottom:6px;">3 · Program</div>
+            <div style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">Activate <b>Reactive Attendance Program</b> (12-Month Rule triggered) — formal review + support plan.</div>
+          </div>
+        </div>
+
+        <div class="ai-answer show">
+          <div class="aa-head">🤖 AI Adviser · support pathway</div>
+          <pre id="empResponse"></pre>
+        </div>
+
+        <div class="note">"The recommendation is supportive — health referral, scheduling review, program support. No discipline. That's the tone of the whole system."</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ── TABS ──────────────────────────────
+  const tabs   = document.querySelectorAll('.tab');
+  const views  = document.querySelectorAll('.view');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.toggle('active', x === t));
+    views.forEach(v => v.classList.toggle('active', v.id === 'view-' + t.dataset.view));
+    // reset panels to first for that view
+    const v = document.getElementById('view-' + t.dataset.view);
+    const panes = v.querySelectorAll('.pane');
+    panes.forEach((p, i) => p.classList.toggle('active', i === 0));
+    const hots = v.querySelectorAll('.hot');
+    hots.forEach((h, i) => h.classList.toggle('active', i === 0));
+  }));
+
+  // ── HOTSPOTS (predefined presenter clicks) ──
+  const stepTot = 9;
+  document.getElementById('stepTot').textContent = stepTot;
+  let revealed = new Set();
+
+  document.querySelectorAll('.hot').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.closest('.view');
+      const target = document.getElementById(btn.dataset.panel);
+      view.querySelectorAll('.hot').forEach(h => h.classList.toggle('active', h === btn));
+      view.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p === target));
+      revealed.add(btn.dataset.panel);
+      document.getElementById('stepNum').textContent = Math.min(revealed.size, stepTot);
+      animateBars(target);
+      animateBarsRects(target);
+    });
+  });
+
+  // animate width-bars inside a pane once it's shown
+  function animateBars(pane) {
+    pane.querySelectorAll('.bfill').forEach(b => { b.style.width = b.dataset.w; });
+  }
+  function animateBarsRects(pane) {
+    pane.querySelectorAll('.bars').forEach(cont => {
+      cont.querySelectorAll('.bt').forEach(bar => {
+        const pct = bar.dataset.h;
+        requestAnimationFrame(() => { bar.style.height = pct; });
+      });
+    });
+  }
+
+  // ── CHARTS ────────────────────────────
+  const MONTHS = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const fleet = [7608,8003,8238,7252,7278,8141,9546,9981,7956,7561,7625,11519];
+  const fmax = Math.max(...fleet);
+  document.getElementById('trendFleet').innerHTML = fleet.map((v,i) =>
+    `<div class="bc"><div class="bt${i===11?' hl':''}" data-h="${Math.round(v/fmax*100)}%" style="height:0"><span class="bval">${i===11?v:''}</span></div><div class="blb">${MONTHS[i]}</div></div>`).join('');
+  document.getElementById('trendVp').innerHTML = fleet.map((v,i) =>
+    `<div class="bc"><div class="bt${i===11?' hl':''}" data-h="${Math.round(v/fmax*100)}%" style="height:0"><span class="bval">${i===11?v:''}</span></div><div class="blb">${MONTHS[i]}</div></div>`).join('');
+
+  const sckE = [9,3,0,9,0,3,0,5,7,11,1,4];
+  const uavE = [0,1,4,0,0,0,15,9,4,0,2,0];
+  const emax = Math.max(...sckE, ...uavE);
+  document.getElementById('empBars').innerHTML = MONTHS.map((m,i) => {
+    const h1 = Math.round(sckE[i]/emax*100), h2 = Math.round(uavE[i]/emax*100);
+    return `<div class="bc" style="flex-direction:column;justify-content:flex-end;gap:2px;">
+      <div class="bt" data-h="${h2}%" style="height:0;background:linear-gradient(180deg,#ef4444,#f97316);max-width:14px;"></div>
+      <div class="bt" data-h="${h1}%" style="height:0;background:linear-gradient(180deg,#3b82f6,#6366f1);max-width:14px;"></div>
+      <div class="blb">${m}</div></div>`;
+  }).join('');
+
+  // ── TYPING EFFECT ─────────────────────
+  function typeLines(el, lines, speed = 18) {
+    el.classList.add('typing');
+    let li = 0, ci = 0;
+    function tick() {
+      if (li >= lines.length) { el.classList.remove('typing'); return; }
+      const line = lines[li];
+      if (ci <= line.length) {
+        el.textContent = lines.slice(0, li).join('\n') + (li > 0 ? '\n' : '') + line.slice(0, ci);
+        ci++; setTimeout(tick, speed);
+      } else { li++; ci = 0; setTimeout(tick, speed * 4); }
+    }
+    tick();
+  }
+
+  // ── EXEC AI ───────────────────────────
+  document.getElementById('execAskBtn').addEventListener('click', function() {
+    if (this.disabled) return; this.disabled = true;
+    const box = document.getElementById('execAnswer');
+    box.classList.add('show');
+    typeLines(document.getElementById('execResponse'), [
+      'YYC drives 42% of fleet absence events — roughly $13M of the $31.7M annual cost.',
+      '',
+      'Why here:',
+      '• Sick time (SCK) is 69% of all events, and YYC runs above the fleet norm.',
+      '• Seasonality: December +51% vs November (flu + holiday travel).',
+      '• 19 critical-risk crew in YYC (of 88 fleet) — 4 already past review threshold.',
+      '',
+      'Recommendation: proactive outreach to YYC critical-risk crew before the next peak, and a scheduling review for December coverage.',
+      '',
+      'Ready to draft the manager brief for YYC.'
+    ]);
+  });
+
+  // ── VP AI ─────────────────────────────
+  document.getElementById('vpAskBtn').addEventListener('click', function() {
+    if (this.disabled) return; this.disabled = true;
+    const box = document.getElementById('vpAnswer');
+    box.classList.add('show');
+    typeLines(document.getElementById('vpResponse'), [
+      'Ranked by cost × risk × readiness:',
+      '',
+      '1. YYC — 42% of cost ($13.3M), 19 critical-risk crew. Start here.',
+      '2. YYZ — 26% of cost ($8.2M), 45 critical-risk crew. Largest risk count.',
+      '3. YVR — 15% of cost ($4.8M). Top-risk individual (#4464, Bradford 70,560).',
+      '',
+      'First action: brief YYC managers on their 19 critical-risk crew this week; run proactive outreach to the top 20 across all bases.',
+      '',
+      'I can generate the manager brief for any base.'
+    ]);
+  });
+
+  // ── EMPLOYEE AI (pre-typed on panel 9) ──
+  (function() {
+    const el = document.getElementById('empResponse');
+    el.textContent = 'For #4464 (YVR · FA · Bradford 70,560):\n\n' +
+      '1. Occupational Health assessment — 52 sick events, persistent 10/12 months.\n' +
+      '2. Scheduling review for the Aug–Sep UAV cluster — fatigue signal.\n' +
+      '3. Activate Reactive Attendance Program (12-Month Rule) with a support plan.\n' +
+      '4. Manager check-in within 7 days; 30-day follow-up.\n' +
+      '5. Offer EAP / wellness support — no discipline step at this stage.';
+  })();
+
+  // ── PRESENTER NOTES TOGGLE ────────────
+  document.getElementById('notesToggle').addEventListener('click', function() {
+    document.body.classList.toggle('notes');
+    this.classList.toggle('on');
+  });
+
+  // ── TIMER ─────────────────────────────
+  let t0 = Date.now();
+  setInterval(() => {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    const m = Math.floor(s / 60), ss = s % 60;
+    document.getElementById('timer').textContent = m + ':' + String(ss).padStart(2, '0');
+  }, 500);
+
+  // animate initial pane bars
+  animateBars(document.getElementById('exec-ovs'));
+  animateBarsRects(document.getElementById('exec-ovs'));
+</script>
+</body>
+</html>
