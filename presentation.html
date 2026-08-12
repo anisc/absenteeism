@@ -54,8 +54,11 @@
       transform: translateX(80px);
       transition: opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1);
       pointer-events: none;
-      overflow: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
     }
+    .slide::before { content: ''; margin: auto; }
     .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
     .slide.exit   { opacity: 0; transform: translateX(-80px); pointer-events: none; }
 
@@ -419,6 +422,42 @@
       border: 1px solid rgba(59,130,246,0.25);
     }
 
+    .demo-compare {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+    .demo-compare.show { opacity: 1; transform: translateY(0); pointer-events: all; }
+    .demo-compare .vs {
+      font-size: 12px; font-weight: 900; letter-spacing: 1px; color: var(--muted);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .demo-compare .comp-card {
+      background: var(--bg3);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .demo-compare .comp-card .cc-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 100px; margin-bottom: 9px;
+    }
+    .demo-compare .comp-card.comp-worst { border-color: rgba(239,68,68,0.3); }
+    .demo-compare .comp-card.comp-worst .cc-tag { color: #fca5a5; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); }
+    .demo-compare .comp-card.comp-best  { border-color: rgba(16,185,129,0.3); }
+    .demo-compare .comp-card.comp-best  .cc-tag { color: #6ee7b7; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); }
+    .demo-compare .cc-name { font-size: 14px; font-weight: 800; letter-spacing: -0.3px; }
+    .demo-compare .cc-role { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .demo-compare .comp-stats { display: flex; gap: 18px; }
+    .demo-compare .comp-stats .cs .cs-v { font-size: 15px; font-weight: 800; }
+    .demo-compare .comp-stats .cs .cs-l { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .comp-worst .comp-stats .cs .cs-v { color: #f87171; }
+    .comp-best  .comp-stats .cs .cs-v { color: #34d399; }
+
     .demo-ask {
       display: flex; align-items: center; gap: 12px;
       background: rgba(99,102,241,0.05);
@@ -452,6 +491,9 @@
       font-size: 13px; line-height: 1.65; color: #cbd5e1;
       white-space: pre-wrap;
       min-height: 90px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 6px;
     }
     .demo-answer pre.ai-response b { color: #fbbf24; font-weight: 700; }
     .typing::after { content: '▍'; color: #6ee7b7; animation: blink 1s step-end infinite; margin-left: 2px; }
@@ -779,6 +821,30 @@
           </div>
         </div>
 
+        <div class="demo-compare" id="demo-compare">
+          <div class="card card-red comp-card comp-worst">
+            <div class="cc-tag">⚠ Worst Performer</div>
+            <div class="cc-name">J. Turner</div>
+            <div class="cc-role">Ramp Operations</div>
+            <div class="comp-stats">
+              <div class="cs"><div class="cs-v">11</div><div class="cs-l">Absence Days</div></div>
+              <div class="cs"><div class="cs-v">612</div><div class="cs-l">Bradford</div></div>
+              <div class="cs"><div class="cs-v">▲ Risk</div><div class="cs-l">Status</div></div>
+            </div>
+          </div>
+          <div class="vs"><span>vs</span></div>
+          <div class="card card-green comp-card comp-best">
+            <div class="cc-tag">★ Best Performer</div>
+            <div class="cc-name">A. Sharma</div>
+            <div class="cc-role">Customer Service</div>
+            <div class="comp-stats">
+              <div class="cs"><div class="cs-v">0</div><div class="cs-l">Absence Days</div></div>
+              <div class="cs"><div class="cs-v">0</div><div class="cs-l">Bradford</div></div>
+              <div class="cs"><div class="cs-v">✓ Solid</div><div class="cs-l">Status</div></div>
+            </div>
+          </div>
+        </div>
+
         <div class="demo-ask">
           <span class="da-label">Ask AI</span>
           <span class="da-input">Why did absenteeism increase this month?</span>
@@ -1057,6 +1123,7 @@
   const askBtn     = document.getElementById('demo-ask');
   const statusEl   = document.getElementById('demo-status');
   const kpisEl     = document.getElementById('demo-kpis');
+  const compareEl  = document.getElementById('demo-compare');
   const answerEl   = document.getElementById('demo-answer');
   const respEl     = document.getElementById('demo-response');
 
@@ -1066,7 +1133,8 @@
     statusEl.innerHTML = '<span class="live-dot"></span> Analyzing 1,240 employee records · validating data · comparing against policy…';
     setTimeout(() => {
       kpisEl.classList.add('show');
-      statusEl.innerHTML = '<span class="live-dot"></span> Analysis complete · 3 insights · ready for questions';
+      compareEl.classList.add('show');
+      statusEl.innerHTML = '<span class="live-dot"></span> Analysis complete · worst vs best performer compared · ready for questions';
     }, 1400);
   });
 
@@ -1078,6 +1146,7 @@
       const line = lines[li];
       if (ci <= line.length) {
         el.textContent = lines.slice(0, li).join('\n') + (li > 0 ? '\n' : '') + line.slice(0, ci);
+        el.scrollTop = el.scrollHeight;
         ci++;
         setTimeout(tick, speed);
       } else {
@@ -1095,6 +1164,9 @@
     answerEl.classList.add('show');
     typeLines(respEl, [
       'Absenteeism increased 12% this month. Primary driver was increased overtime in Ramp Operations.',
+      '',
+      'Worst performer: J. Turner (Ramp Ops) — 11 absence days, Bradford 612, over the review threshold.',
+      'Best performer: A. Sharma (Customer Service) — zero absences across the period.',
       '',
       'Four employees exceeded the Attendance Review threshold. If the trend continues, two more will qualify next month.',
       '',
