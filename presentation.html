@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Powered Workforce Intelligence — Executive Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #04060f;
+      --bg2:     #080d1a;
+      --bg3:     #0c1120;
+      --border:  rgba(255,255,255,0.07);
+      --blue:    #3b82f6;
+      --indigo:  #6366f1;
+      --cyan:    #06b6d4;
+      --green:   #10b981;
+      --amber:   #f59e0b;
+      --red:     #ef4444;
+      --text:    #f0f4ff;
+      --muted:   #64748b;
+      --dim:     #1e293b;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Inter', 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      cursor: default;
+      user-select: none;
+    }
+
+    /* ── DECK WRAPPER ── */
+    #deck { width: 100%; height: 100%; position: relative; }
+
+    /* ── SLIDES ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 54px 70px;
+      opacity: 0;
+      transform: translateX(80px);
+      transition: opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1);
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+    .slide.exit   { opacity: 0; transform: translateX(-80px); pointer-events: none; }
+
+    /* ── AMBIENT GLOW ── */
+    .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-blue  { background: rgba(59,130,246,0.14); }
+    .glow-indigo{ background: rgba(99,102,241,0.12); }
+    .glow-cyan  { background: rgba(6,182,212,0.10);  }
+    .glow-green { background: rgba(16,185,129,0.10); }
+    .glow-amber { background: rgba(245,158,11,0.10); }
+    .glow-red   { background: rgba(239,68,68,0.10);  }
+
+    .slide > * { position: relative; z-index: 1; }
+
+    /* ── SLIDE COUNTER / NAV ── */
+    #progress {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 200;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--dim);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .dot.active { background: var(--blue); width: 22px; border-radius: 3px; }
+
+    .nav-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 200;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 20px; color: var(--muted);
+      transition: all 0.2s;
+      backdrop-filter: blur(12px);
+    }
+    .nav-btn:hover { background: rgba(59,130,246,0.15); color: var(--blue); border-color: rgba(59,130,246,0.4); }
+    #prev { left: 20px; }
+    #next { right: 20px; }
+
+    #slide-num {
+      position: fixed; top: 20px; right: 28px;
+      font-size: 11px; color: var(--muted); font-weight: 500;
+      letter-spacing: 1px; z-index: 200;
+    }
+
+    #logo-badge {
+      position: fixed; top: 20px; left: 28px;
+      display: flex; align-items: center; gap: 10px; z-index: 200;
+    }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .logo-text { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; }
+
+    #kb-hint {
+      position: fixed; bottom: 28px; right: 28px;
+      font-size: 10px; color: var(--muted); opacity: 0.5;
+    }
+
+    /* ═══════════════════════════════════════
+       TYPOGRAPHY SYSTEM
+    ═══════════════════════════════════════ */
+    .eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--blue);
+      margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .eyebrow::before {
+      content: ''; display: inline-block;
+      width: 28px; height: 2px; background: var(--blue); border-radius: 1px;
+    }
+
+    h1.hero-title {
+      font-size: clamp(2.6rem, 4.6vw, 4.2rem);
+      font-weight: 900; line-height: 1.06; letter-spacing: -2px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 24px;
+      max-width: 860px; text-align: center;
+    }
+
+    h2.section-title {
+      font-size: clamp(1.9rem, 3.3vw, 2.8rem);
+      font-weight: 800; letter-spacing: -1.5px; line-height: 1.12;
+      margin-bottom: 12px; text-align: center;
+    }
+
+    h3.card-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+
+    .subtitle {
+      font-size: 1.05rem; color: var(--muted); line-height: 1.65;
+      max-width: 680px; text-align: center; margin-bottom: 20px;
+    }
+
+    .body-text { font-size: 0.95rem; color: #94a3b8; line-height: 1.7; }
+
+    /* ═══════════════════════════════════════
+       COMPONENT LIBRARY
+    ═══════════════════════════════════════ */
+    .tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 12px; font-weight: 600; border: 1px solid;
+    }
+    .tag-blue   { background: rgba(59,130,246,.12);  border-color: rgba(59,130,246,.35);  color: #93c5fd; }
+    .tag-green  { background: rgba(16,185,129,.12);  border-color: rgba(16,185,129,.35);  color: #6ee7b7; }
+    .tag-amber  { background: rgba(245,158,11,.12);  border-color: rgba(245,158,11,.35);  color: #fcd34d; }
+    .tag-red    { background: rgba(239,68,68,.12);   border-color: rgba(239,68,68,.35);   color: #fca5a5; }
+    .tag-indigo { background: rgba(99,102,241,.12);  border-color: rgba(99,102,241,.35);  color: #a5b4fc; }
+    .tag-cyan   { background: rgba(6,182,212,.12);   border-color: rgba(6,182,212,.35);   color: #67e8f9; }
+
+    .hdivider { width: 100%; height: 1px; background: var(--border); margin: 24px 0; }
+
+    .stat-block { text-align: center; }
+    .stat-num {
+      font-size: clamp(1.8rem, 3.6vw, 3.1rem);
+      font-weight: 900; letter-spacing: -2px; line-height: 1;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+    .stat-sub   { font-size: 11px; color: #475569; margin-top: 4px; }
+    .stat-blue  .stat-num { color: #60a5fa; }
+    .stat-red   .stat-num { color: #f87171; }
+    .stat-amber .stat-num { color: #fbbf24; }
+    .stat-green .stat-num { color: #34d399; }
+
+    .card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; border-radius: 16px 16px 0 0;
+    }
+    .card-blue::after   { background: linear-gradient(90deg,#3b82f6,#6366f1); }
+    .card-green::after  { background: linear-gradient(90deg,#10b981,#06b6d4); }
+    .card-amber::after  { background: linear-gradient(90deg,#f59e0b,#f97316); }
+    .card-red::after    { background: linear-gradient(90deg,#ef4444,#f97316); }
+    .card-indigo::after { background: linear-gradient(90deg,#6366f1,#8b5cf6); }
+    .card-cyan::after   { background: linear-gradient(90deg,#06b6d4,#3b82f6); }
+
+    .icon-circle {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 14px;
+    }
+
+    .feature-list { list-style: none; width: 100%; }
+    .feature-list li {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 13.5px; color: #cbd5e1; line-height: 1.5;
+    }
+    .feature-list li:last-child { border-bottom: none; }
+    .feature-list li span.icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+    /* Gradients */
+    .grad-blue   { background: linear-gradient(135deg,#3b82f6,#6366f1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad-green  { background: linear-gradient(135deg,#10b981,#06b6d4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad-amber  { background: linear-gradient(135deg,#f59e0b,#f97316); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad-red    { background: linear-gradient(135deg,#ef4444,#f97316); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad-indigo { background: linear-gradient(135deg,#6366f1,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* Quote block */
+    .quote-block {
+      border-left: 3px solid var(--blue);
+      padding: 12px 20px;
+      background: rgba(59,130,246,0.05);
+      border-radius: 0 10px 10px 0;
+      font-size: 14px; color: #93c5fd; font-style: italic;
+      line-height: 1.6;
+    }
+
+    /* Agent pipeline nodes */
+    .agent-flow { display: flex; align-items: stretch; width: 100%; max-width: 1100px; }
+    .agent-node {
+      flex: 1;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+      position: relative;
+    }
+    .agent-node::after {
+      content: '→';
+      position: absolute; right: -14px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted); font-size: 15px; z-index: 2;
+    }
+    .agent-node:last-child::after { display: none; }
+    .agent-node-icon { font-size: 22px; margin-bottom: 8px; }
+    .agent-node h4 { font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+    .agent-node p  { font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+    .agent-gap { width: 28px; flex-shrink: 0; }
+
+    /* Chain (Microsoft ecosystem) */
+    .chain { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+    .chain-node {
+      background: var(--bg3);
+      border: 1px solid rgba(59,130,246,0.25);
+      border-radius: 12px;
+      padding: 12px 18px;
+      text-align: center;
+    }
+    .chain-node .ci { font-size: 20px; display: block; margin-bottom: 5px; }
+    .chain-node .cn { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+    .chain-node .cd { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .chain-arrow { color: var(--muted); font-size: 15px; }
+
+    /* Flow columns (Today vs Tomorrow) */
+    .flow-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; width: 100%; max-width: 1000px; }
+    .flow-col { display: flex; flex-direction: column; gap: 5px; }
+    .flow-head {
+      text-align: center; font-size: 11px; font-weight: 800;
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .flow-step {
+      padding: 11px 14px; border-radius: 12px; text-align: center;
+      font-size: 13.5px; font-weight: 600;
+    }
+    .flow-step.today     { background: rgba(148,163,184,0.06);  border: 1px solid rgba(148,163,184,0.18); color: #94a3b8; }
+    .flow-step.tomorrow  { background: rgba(16,185,129,0.08);   border: 1px solid rgba(16,185,129,0.28); color: #6ee7b7; }
+    .flow-step.tomorrow:last-child { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.4); color: #93c5fd; }
+    .flow-arrow { text-align: center; color: var(--muted); font-size: 13px; line-height: 1; }
+    .flow-col .flow-arrow { margin: 2px 0; }
+
+    /* Impact table */
+    .impact-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .impact-table th {
+      text-align: left; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
+    }
+    .impact-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: #cbd5e1;
+    }
+    .impact-table tr:last-child td { border-bottom: none; }
+    .impact-table td:first-child { font-weight: 600; color: var(--text); }
+
+    /* Chip grid (beyond absenteeism) */
+    .chip-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; width: 100%; max-width: 1100px; }
+    .chip-tile {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 10px;
+      text-align: center;
+      transition: all 0.25s ease;
+    }
+    .chip-tile:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-2px); }
+    .chip-tile .ct-icon { font-size: 22px; margin-bottom: 8px; }
+    .chip-tile .ct-label { font-size: 12.5px; font-weight: 600; color: #cbd5e1; }
+
+    /* ═══════════════════════════════════
+       LIVE DEMO MOCK-UP
+    ═══════════════════════════════════ */
+    .demo-window {
+      width: 100%;
+      max-width: 1000px;
+      background: var(--bg2);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    }
+    .demo-titlebar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .demo-dot.d1 { background: #ef4444; }
+    .demo-dot.d2 { background: #f59e0b; }
+    .demo-dot.d3 { background: #10b981; }
+    .demo-titlebar .dt-title { font-size: 12.5px; font-weight: 700; margin-left: 8px; color: #cbd5e1; }
+    .demo-titlebar .dt-badge { margin-left: auto; font-size: 10px; color: #34d399; font-weight: 700; letter-spacing: 1px; }
+
+    .demo-body { padding: 22px 26px 26px; display: flex; flex-direction: column; gap: 18px; }
+
+    .demo-upload {
+      display: flex; align-items: center; gap: 16px;
+      border: 1.5px dashed rgba(59,130,246,0.35);
+      border-radius: 12px;
+      padding: 14px 18px;
+      background: rgba(59,130,246,0.04);
+    }
+    .demo-upload .du-file { font-size: 13.5px; font-weight: 600; color: #e2e8f0; flex: 1; min-width: 0; }
+    .demo-upload .du-file small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+    .demo-upload .du-file span.cursor { display: none; }
+    .demo-btn {
+      border: none; cursor: pointer;
+      font-family: inherit; font-weight: 700; font-size: 13px;
+      padding: 10px 22px; border-radius: 10px;
+      background: linear-gradient(135deg,#3b82f6,#6366f1);
+      color: #fff;
+      transition: opacity 0.2s;
+    }
+    .demo-btn:hover { opacity: 0.9; }
+    .demo-btn:disabled { opacity: 0.45; cursor: default; }
+
+    .demo-status { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; min-height: 16px; }
+    .demo-status .live-dot { margin-right: 6px; }
+
+    .demo-kpis {
+      display: grid; grid-template-columns: 1fr 1fr 1.6fr;
+      gap: 14px;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+    .demo-kpis.show { opacity: 1; transform: translateY(0); pointer-events: all; }
+    .demo-kpi {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .demo-kpi .k-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; }
+    .demo-kpi .k-value { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+    .demo-kpi.k-blue  .k-value { color: #60a5fa; }
+    .demo-kpi.k-amber .k-value { color: #fbbf24; }
+    .demo-kpi.k-red   .k-value { color: #f87171; }
+    .demo-kpi .k-sub { font-size: 11px; color: #64748b; margin-top: 3px; }
+    .demo-kpi .k-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .demo-kpi .k-chip {
+      font-size: 10.5px; font-weight: 600;
+      padding: 4px 10px; border-radius: 100px;
+      background: rgba(59,130,246,0.12); color: #93c5fd;
+      border: 1px solid rgba(59,130,246,0.25);
+    }
+
+    .demo-ask {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(99,102,241,0.05);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .demo-ask .da-label { font-size: 11px; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
+    .demo-ask .da-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: inherit; font-size: 13.5px; color: #e2e8f0;
+      min-width: 0;
+    }
+
+    .demo-answer {
+      display: none;
+      background: var(--bg3);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .demo-answer.show { display: block; }
+    .demo-answer .da-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700; color: #6ee7b7;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .demo-answer pre.ai-response {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; line-height: 1.65; color: #cbd5e1;
+      white-space: pre-wrap;
+      min-height: 90px;
+    }
+    .demo-answer pre.ai-response b { color: #fbbf24; font-weight: 700; }
+    .typing::after { content: '▍'; color: #6ee7b7; animation: blink 1s step-end infinite; margin-left: 2px; }
+
+    /* ═══════════════════════════════════
+       ANIMATIONS
+    ═══════════════════════════════════ */
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(24px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; }
+      50% { opacity:0.4; }
+    }
+    @keyframes blink {
+      0%,100% { opacity:1; }
+      50% { opacity:0; }
+    }
+
+    .slide.active .anim-1 { animation: fadeUp 0.5s ease 0.05s both; }
+    .slide.active .anim-2 { animation: fadeUp 0.5s ease 0.15s both; }
+    .slide.active .anim-3 { animation: fadeUp 0.5s ease 0.25s both; }
+    .slide.active .anim-4 { animation: fadeUp 0.5s ease 0.35s both; }
+    .slide.active .anim-5 { animation: fadeUp 0.5s ease 0.45s both; }
+    .slide.active .anim-6 { animation: fadeUp 0.5s ease 0.55s both; }
+    .slide.active .anim-7 { animation: fadeUp 0.5s ease 0.65s both; }
+
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.8s ease infinite;
+      display: inline-block;
+    }
+
+    .cursor {
+      display: inline-block; width: 2px; height: 1em;
+      background: var(--blue);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom; margin-left: 3px;
+    }
+
+    .slide-center { text-align: center; align-items: center; }
+
+    .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; max-width: 1100px; }
+    .cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; max-width: 1100px; }
+    .cols-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; width: 100%; max-width: 1100px; }
+    .cols-wide-narrow { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; width: 100%; max-width: 1100px; align-items: start; }
+    .full-width { width: 100%; max-width: 1100px; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- FIXED UI -->
+<div id="logo-badge">
+  <div class="logo-icon">✈</div>
+  <span class="logo-text">WestJet · AI Decision Intelligence</span>
+</div>
+<div id="slide-num"><span id="cur">1</span> / <span id="tot">9</span></div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div id="progress"></div>
+<div id="kb-hint">← → to navigate · Space to advance</div>
+
+<div id="deck">
+
+  <!-- ══════════════════════════════
+       SLIDE 1 — TITLE
+  ══════════════════════════════ -->
+  <div class="slide slide-center active" id="s0">
+    <div class="glow glow-blue"  style="width:600px;height:600px;top:-100px;left:-150px;"></div>
+    <div class="glow glow-indigo" style="width:400px;height:400px;bottom:-50px;right:-100px;"></div>
+
+    <div class="anim-1" style="display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;justify-content:center;">
+      <span class="tag tag-blue">🤖 AI Decision Intelligence</span>
+      <span class="tag tag-amber">🏢 President &amp; EVP HR Briefing</span>
+      <span class="tag tag-green"><span class="live-dot"></span>&nbsp;Proposed Enterprise Capability</span>
+    </div>
+
+    <h1 class="hero-title anim-2">
+      AI-Powered<br>Workforce Intelligence
+    </h1>
+
+    <p class="subtitle anim-3" style="font-size:1.15rem;color:#cbd5e1;font-weight:500;">
+      Transforming Employee Attendance from<br><span class="grad-blue">Reporting</span> to <span class="grad-green">Predictive Decision Support</span>
+    </p>
+
+    <div class="hdivider anim-4" style="max-width:420px;"></div>
+
+    <div class="anim-5" style="max-width:720px;text-align:center;">
+      <p style="font-size:14px;color:#94a3b8;line-height:1.7;font-style:italic;">
+        "Today we spend time collecting data and building reports. Tomorrow, AI becomes an advisor —
+        explaining what happened, predicting what will happen, and recommending what to do."
+      </p>
+    </div>
+
+    <div class="anim-6" style="display:flex;gap:28px;align-items:center;font-size:13px;color:var(--muted);margin-top:26px;">
+      <span>📅 August 2026</span>
+      <span>·</span>
+      <span>🏢 Executive Leadership</span>
+      <span>·</span>
+      <span>🔒 Internal — Confidential</span>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 2 — THE PROBLEM
+  ══════════════════════════════ -->
+  <div class="slide" id="s1">
+    <div class="glow glow-red" style="width:480px;height:480px;top:-100px;right:-100px;"></div>
+    <div class="glow glow-green" style="width:380px;height:380px;bottom:-60px;left:-120px;"></div>
+
+    <div class="eyebrow anim-1">The Problem</div>
+    <h2 class="section-title anim-2" style="max-width:760px;margin-bottom:14px;">
+      Reports tell us what happened.<br>Leaders need to know <span class="grad-red">why, what's next, and what to do.</span>
+    </h2>
+    <p class="subtitle anim-3" style="max-width:620px;">
+      We have built an organization that is excellent at describing the past — and
+      spends its energy on <strong style="color:#e2e8f0;">hindsight</strong> when it should be buying time for
+      <strong style="color:#e2e8f0;">foresight</strong>.
+    </p>
+
+    <div class="flow-cols anim-4" style="margin-top:16px;">
+      <div class="flow-col">
+        <div class="flow-head" style="color:#94a3b8;">Today · Reporting</div>
+        <div class="flow-step today">Excel</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step today">Pivot Tables</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step today">Power BI</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step today">Manager interpretation</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step today">Decision</div>
+      </div>
+
+      <div class="flow-col">
+        <div class="flow-head" style="color:#6ee7b7;">Tomorrow · Decision Support</div>
+        <div class="flow-step tomorrow">Data</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step tomorrow">AI</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step tomorrow">Insights</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step tomorrow">Recommendation</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step tomorrow">Decision</div>
+      </div>
+    </div>
+
+    <p class="anim-5" style="margin-top:22px;font-size:13px;color:var(--muted);">
+      AI positions itself as a <strong style="color:#e2e8f0;">decision-support tool</strong> — not a replacement for our leaders.
+    </p>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 3 — CURRENT CHALLENGES
+  ══════════════════════════════ -->
+  <div class="slide" id="s2">
+    <div class="glow glow-amber" style="width:460px;height:460px;top:-90px;left:-100px;"></div>
+    <div class="glow glow-red" style="width:340px;height:340px;bottom:-60px;right:-80px;"></div>
+
+    <div class="eyebrow anim-1">Why Now</div>
+    <h2 class="section-title anim-2" style="max-width:720px;margin-bottom:30px;">
+      Today's data gives us <span class="grad-amber">hindsight, not foresight</span>
+    </h2>
+
+    <div class="cols-wide-narrow anim-3">
+      <div class="card card-amber">
+        <h3 class="card-title" style="margin-bottom:6px;">Where we are today</h3>
+        <p class="body-text" style="font-size:12.5px;margin-bottom:10px;">Across attendance, safety, and operations, our leaders share the same friction points.</p>
+        <ul class="feature-list">
+          <li><span class="icon">📄</span><div><strong>Hundreds of rows in Excel</strong> — insights buried inside raw data, not surfaced from it</div></li>
+          <li><span class="icon">🔍</span><div><strong>Managers manually searching for trends</strong> — the same pattern hunt, every cycle, in every department</div></li>
+          <li><span class="icon">⚖️</span><div><strong>Policy interpretation varies</strong> — the same situation can be handled differently across teams and managers</div></li>
+          <li><span class="icon">🔄</span><div><strong>Reactive rather than proactive</strong> — we respond after problems surface instead of anticipating them</div></li>
+          <li><span class="icon">⏳</span><div><strong>Significant time preparing reports</strong> instead of acting on them</div></li>
+        </ul>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card" style="background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.25);padding:28px 26px;">
+          <div style="font-size:40px;margin-bottom:10px;">💡</div>
+          <p style="font-size:20px;font-weight:800;letter-spacing:-0.5px;line-height:1.3;">
+            We have data.<br><span class="grad-amber">We need intelligence.</span>
+          </p>
+          <p class="body-text" style="font-size:12.5px;margin-top:12px;">
+            The raw material already exists. The missing step is turning it into timely, evidence-based guidance.
+          </p>
+        </div>
+        <div class="quote-block">
+          The cost is not the data — it's the <strong style="color:#e2e8f0;">delayed and inconsistent decisions</strong> made without it.
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 4 — VISION
+  ══════════════════════════════ -->
+  <div class="slide" id="s3">
+    <div class="glow glow-blue" style="width:500px;height:500px;bottom:-100px;left:-100px;"></div>
+    <div class="glow glow-cyan" style="width:350px;height:350px;top:-50px;right:-80px;"></div>
+
+    <div class="eyebrow anim-1">The Vision</div>
+    <h2 class="section-title anim-2" style="margin-bottom:8px;">
+      An <span class="grad-blue">AI Workforce Intelligence Agent</span>
+    </h2>
+    <p class="subtitle anim-3" style="font-size:14px;margin-bottom:30px;">
+      From a single attendance file to an executive summary — automatically, consistently, in minutes.
+    </p>
+
+    <div class="agent-flow anim-4">
+      <div class="agent-node" style="border-color:rgba(59,130,246,.25);">
+        <div class="agent-node-icon">📤</div>
+        <h4 style="color:#60a5fa;">Upload Attendance File</h4>
+        <p>Weekly export, same format as today</p>
+      </div>
+      <div class="agent-node" style="border-color:rgba(6,182,212,.25);">
+        <div class="agent-node-icon">✅</div>
+        <h4 style="color:#67e8f9;">AI Validates Data</h4>
+        <p>Checks completeness &amp; quality</p>
+      </div>
+      <div class="agent-node" style="border-color:rgba(99,102,241,.25);">
+        <div class="agent-node-icon">📈</div>
+        <h4 style="color:#a5b4fc;">AI Analyzes Trends</h4>
+        <p>Finds patterns and anomalies</p>
+      </div>
+      <div class="agent-node" style="border-color:rgba(245,158,11,.25);">
+        <div class="agent-node-icon">⚖️</div>
+        <h4 style="color:#fbbf24;">AI Compares Against Policy</h4>
+        <p>Applies rules consistently</p>
+      </div>
+      <div class="agent-node" style="border-color:rgba(239,68,68,.25);">
+        <div class="agent-node-icon">🔮</div>
+        <h4 style="color:#fca5a5;">AI Predicts Future Risk</h4>
+        <p>Flags what's coming next</p>
+      </div>
+      <div class="agent-node" style="border-color:rgba(16,185,129,.25);">
+        <div class="agent-node-icon">💡</div>
+        <h4 style="color:#34d399;">AI Recommends Actions</h4>
+        <p>What to do — and when</p>
+      </div>
+    </div>
+
+    <div class="anim-5" style="display:flex;align-items:center;gap:14px;margin-top:24px;">
+      <span style="font-size:20px;color:var(--muted);">→</span>
+      <div class="card card-blue" style="flex:1;padding:16px 22px;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:24px;">📊</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;">Power BI Dashboard</div>
+          <div style="font-size:11px;color:var(--muted);">Interactive view for every level of the organization</div>
+        </div>
+      </div>
+      <div class="card card-green" style="flex:1;padding:16px 22px;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:24px;">📝</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;">Executive Summary</div>
+          <div style="font-size:11px;color:var(--muted);">What happened · what's next · what we recommend</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 5 — LIVE DEMONSTRATION
+  ══════════════════════════════ -->
+  <div class="slide" id="s4">
+    <div class="glow glow-green" style="width:420px;height:420px;top:-80px;right:-80px;"></div>
+    <div class="glow glow-blue" style="width:320px;height:320px;bottom:-60px;left:-60px;"></div>
+
+    <div class="eyebrow anim-1">Live Demonstration</div>
+    <h2 class="section-title anim-2" style="margin-bottom:6px;">
+      One question. <span class="grad-green">Thirty seconds.</span>
+    </h2>
+    <p class="subtitle anim-3" style="font-size:13.5px;margin-bottom:24px;">
+      Simulated concept — every leader's question, answered with data, policy, and recommended actions.
+    </p>
+
+    <div class="demo-window anim-4">
+      <div class="demo-titlebar">
+        <span class="demo-dot d1"></span><span class="demo-dot d2"></span><span class="demo-dot d3"></span>
+        <span class="dt-title">Attendance Intelligence</span>
+        <span class="dt-badge"><span class="live-dot"></span>&nbsp; Copilot Agent</span>
+      </div>
+
+      <div class="demo-body">
+        <div class="demo-upload">
+          <div class="du-file">
+            📄 attendance_export.xlsx
+            <small>Monthly attendance extract · 1,240 employees</small>
+          </div>
+          <button class="demo-btn" id="demo-analyze">Analyze</button>
+        </div>
+
+        <div class="demo-status" id="demo-status"></div>
+
+        <div class="demo-kpis" id="demo-kpis">
+          <div class="demo-kpi k-red">
+            <div class="k-label">Overall Absence Rate</div>
+            <div class="k-value">4.2%</div>
+            <div class="k-sub">▲ 12% vs last month</div>
+          </div>
+          <div class="demo-kpi k-amber">
+            <div class="k-label">Employees at Risk</div>
+            <div class="k-value">18</div>
+            <div class="k-sub">4 past review threshold</div>
+          </div>
+          <div class="demo-kpi k-blue">
+            <div class="k-label">Departments</div>
+            <div class="k-chips">
+              <span class="k-chip">Ramp</span>
+              <span class="k-chip">Cargo</span>
+              <span class="k-chip">Customer Service</span>
+            </div>
+            <div class="k-sub">Top contributors to the trend</div>
+          </div>
+        </div>
+
+        <div class="demo-ask">
+          <span class="da-label">Ask AI</span>
+          <span class="da-input">Why did absenteeism increase this month?</span>
+          <button class="demo-btn" id="demo-ask">Ask</button>
+        </div>
+
+        <div class="demo-answer" id="demo-answer">
+          <div class="da-head">🤖 AI Adviser · backed by company data &amp; policy</div>
+          <pre class="ai-response" id="demo-response"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 6 — WHY COPILOT
+  ══════════════════════════════ -->
+  <div class="slide" id="s5">
+    <div class="glow glow-indigo" style="width:460px;height:460px;top:-90px;right:-90px;"></div>
+    <div class="glow glow-blue" style="width:340px;height:340px;bottom:-60px;left:-80px;"></div>
+
+    <div class="eyebrow anim-1">Why Copilot</div>
+    <h2 class="section-title anim-2" style="margin-bottom:8px;">
+      We're not adding a system.<br>We're <span class="grad-indigo">extending the one we have.</span>
+    </h2>
+    <p class="subtitle anim-3" style="font-size:13.5px;margin-bottom:30px;">
+      This is built entirely on the Microsoft ecosystem already deployed across the company.
+    </p>
+
+    <div class="chain anim-4" style="max-width:1000px;">
+      <div class="chain-node">
+        <span class="ci">🧩</span>
+        <span class="cn">Microsoft 365</span>
+        <div class="cd">Our digital workplace</div>
+      </div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node">
+        <span class="ci">🗂️</span>
+        <span class="cn">SharePoint</span>
+        <div class="cd">Secure document &amp; policy store</div>
+      </div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node">
+        <span class="ci">📊</span>
+        <span class="cn">Excel</span>
+        <div class="cd">Data we already produce</div>
+      </div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node">
+        <span class="ci">⚙️</span>
+        <span class="cn">Power Automate</span>
+        <div class="cd">Workflow &amp; alerts</div>
+      </div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node">
+        <span class="ci">📈</span>
+        <span class="cn">Power BI</span>
+        <div class="cd">Visualization we trust</div>
+      </div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node">
+        <span class="ci">🤖</span>
+        <span class="cn">Copilot Studio</span>
+        <div class="cd">The intelligence layer</div>
+      </div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node" style="border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.07);">
+        <span class="ci">🧠</span>
+        <span class="cn" style="color:#6ee7b7;">AI Agent</span>
+        <div class="cd">Decision support for leaders</div>
+      </div>
+    </div>
+
+    <div class="anim-5" style="display:flex;gap:14px;margin-top:30px;flex-wrap:wrap;justify-content:center;">
+      <span class="tag tag-green">✓ No new platform</span>
+      <span class="tag tag-green">✓ No duplicate data</span>
+      <span class="tag tag-blue">✓ Uses our existing Microsoft investment</span>
+      <span class="tag tag-indigo">✓ Enterprise security &amp; governance</span>
+      <span class="tag tag-cyan">✓ Familiar tools for every user</span>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 7 — BUSINESS VALUE
+  ══════════════════════════════ -->
+  <div class="slide" id="s6">
+    <div class="glow glow-amber" style="width:440px;height:440px;top:-90px;left:-90px;"></div>
+    <div class="glow glow-green" style="width:360px;height:360px;bottom:-60px;right:-80px;"></div>
+
+    <div class="eyebrow anim-1">Business Value</div>
+    <h2 class="section-title anim-2" style="margin-bottom:30px;">
+      The shift leaders will <span class="grad-amber">actually feel</span>
+    </h2>
+
+    <div class="full-width anim-3" style="max-width:900px;">
+      <div class="card" style="padding:10px 10px 4px;">
+        <table class="impact-table">
+          <thead>
+            <tr>
+              <th>Today</th>
+              <th style="color:#34d399;">Tomorrow</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>📄 Reports</td><td style="color:#6ee7b7;">💡 Insights</td></tr>
+            <tr><td>🔄 Reactive</td><td style="color:#6ee7b7;">🔮 Predictive</td></tr>
+            <tr><td>👤 Manual interpretation</td><td style="color:#6ee7b7;">🤖 AI recommendations</td></tr>
+            <tr><td>📖 Policy lookup</td><td style="color:#6ee7b7;">⚡ Instant guidance</td></tr>
+            <tr><td>🕐 Hours of analysis</td><td style="color:#6ee7b7;">⏱️ Minutes</td></tr>
+            <tr><td>🖼️ Static dashboards</td><td style="color:#6ee7b7;">🗨️ Interactive AI</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="anim-4" style="display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center;max-width:1000px;">
+      <span class="tag tag-blue">⚡ Faster decisions</span>
+      <span class="tag tag-green">🤝 Better employee outcomes</span>
+      <span class="tag tag-indigo">🔮 Predictive insights</span>
+      <span class="tag tag-cyan">⚖️ Consistent policy application</span>
+      <span class="tag tag-green">📈 Improved productivity</span>
+      <span class="tag tag-blue">♾️ Scalable AI capability</span>
+      <span class="tag tag-amber">💰 Better return on Microsoft investment</span>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 8 — BEYOND ABSENTEEISM
+  ══════════════════════════════ -->
+  <div class="slide" id="s7">
+    <div class="glow glow-indigo" style="width:460px;height:460px;bottom:-100px;left:-100px;"></div>
+    <div class="glow glow-cyan" style="width:360px;height:360px;top:-80px;right:-80px;"></div>
+
+    <div class="eyebrow anim-1">The Bigger Opportunity</div>
+    <h2 class="section-title anim-2" style="margin-bottom:8px;">
+      One AI platform.<br><span class="grad-indigo">Multiple business problems.</span>
+    </h2>
+    <p class="subtitle anim-3" style="font-size:13.5px;margin-bottom:24px;">
+      Absenteeism Analytics is the <strong style="color:#e2e8f0;">first use case</strong> — the entry point into an enterprise
+      <strong style="color:#a5b4fc;">AI Decision Intelligence Platform</strong> that serves the whole company.
+    </p>
+
+    <div class="chip-grid anim-4">
+      <div class="chip-tile"><div class="ct-icon">🗓️</div><div class="ct-label">Attendance</div></div>
+      <div class="chip-tile"><div class="ct-icon">💙</div><div class="ct-label">Employee Wellness</div></div>
+      <div class="chip-tile"><div class="ct-icon">🦺</div><div class="ct-label">Safety</div></div>
+      <div class="chip-tile"><div class="ct-icon">⛑️</div><div class="ct-label">Injury Prevention</div></div>
+      <div class="chip-tile"><div class="ct-icon">🏭</div><div class="ct-label">Operational Performance</div></div>
+      <div class="chip-tile"><div class="ct-icon">🔎</div><div class="ct-label">Audit Findings</div></div>
+      <div class="chip-tile"><div class="ct-icon">🤗</div><div class="ct-label">Engagement</div></div>
+      <div class="chip-tile"><div class="ct-icon">🥱</div><div class="ct-label">Fatigue</div></div>
+      <div class="chip-tile"><div class="ct-icon">🚪</div><div class="ct-label">Turnover</div></div>
+      <div class="chip-tile"><div class="ct-icon">🎓</div><div class="ct-label">Training Compliance</div></div>
+    </div>
+
+    <div class="cols-4 anim-5" style="margin-top:24px;max-width:1000px;">
+      <div class="card card-indigo" style="padding:16px 18px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">🧑‍💼</div>
+        <div style="font-size:12.5px;font-weight:700;">HR</div>
+      </div>
+      <div class="card card-amber" style="padding:16px 18px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">🦺</div>
+        <div style="font-size:12.5px;font-weight:700;">Safety</div>
+      </div>
+      <div class="card card-blue" style="padding:16px 18px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">⚙️</div>
+        <div style="font-size:12.5px;font-weight:700;">Operations</div>
+      </div>
+      <div class="card card-green" style="padding:16px 18px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">🤝</div>
+        <div style="font-size:12.5px;font-weight:700;">Finance &amp; CX</div>
+      </div>
+    </div>
+
+    <p class="anim-6" style="margin-top:22px;font-size:15px;font-weight:700;letter-spacing:-0.3px;">
+      One platform. <span class="grad-indigo">Enterprise capability.</span>
+    </p>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SLIDE 9 — THE FUTURE
+  ══════════════════════════════ -->
+  <div class="slide slide-center" id="s8">
+    <div class="glow glow-blue"   style="width:600px;height:600px;top:-150px;left:-150px;"></div>
+    <div class="glow glow-indigo" style="width:450px;height:450px;bottom:-100px;right:-100px;"></div>
+    <div class="glow glow-green"  style="width:280px;height:280px;bottom:0;left:30%;"></div>
+
+    <div class="anim-1" style="margin-bottom:20px;">
+      <span class="tag tag-blue">🤖 The Ask</span>
+    </div>
+
+    <h2 class="section-title anim-2" style="text-align:center;max-width:820px;margin-bottom:26px;font-size:clamp(1.9rem,3.4vw,2.9rem);">
+      "What if every leader could ask, <span class="grad-blue">'Why has absenteeism increased in my department?'</span> and receive an answer backed by company data, policy, and recommended actions — in less than <span class="grad-green">30 seconds</span>?"
+    </h2>
+
+    <p class="anim-3" style="font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:30px;">
+      That's the capability I'm proposing.
+    </p>
+
+    <div class="hdivider anim-4" style="max-width:360px;"></div>
+
+    <p class="anim-5" style="max-width:720px;text-align:center;font-size:14.5px;color:#cbd5e1;line-height:1.75;">
+      AI won't replace leaders. <span class="grad-blue">AI will augment leaders</span> — transforming data into
+      timely, evidence-based recommendations.
+    </p>
+
+    <p class="anim-6" style="max-width:760px;text-align:center;font-size:13.5px;color:var(--muted);line-height:1.7;margin-top:20px;font-style:italic;">
+      "My vision is to move from descriptive reporting to intelligent decision support — enabling leaders to spend
+      less time interpreting data and more time improving the employee experience."
+    </p>
+
+    <div class="anim-7" style="margin-top:28px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+      <div class="card card-blue" style="padding:14px 22px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">NEXT STEP</div>
+        <div style="font-size:13px;font-weight:700;color:#93c5fd;">✅ Pilot in one department to prove the value</div>
+      </div>
+      <div class="card card-green" style="padding:14px 22px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">THEN</div>
+        <div style="font-size:13px;font-weight:700;color:#6ee7b7;">🚀 Scale across HR, Safety &amp; Operations</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  // ── SLIDES ──────────────────────────────────────
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dots   = [];
+  let current  = 0;
+
+  const progress = document.getElementById('progress');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => goTo(i));
+    progress.appendChild(d);
+    dots.push(d);
+  });
+
+  document.getElementById('tot').textContent = slides.length;
+
+  function goTo(n) {
+    if (n < 0 || n >= slides.length || n === current) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit');
+    const prev = current;
+    current = n;
+    setTimeout(() => slides[prev].classList.remove('exit'), 600);
+    slides[current].classList.add('active');
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('cur').textContent = current + 1;
+  }
+
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'Space') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(current - 1); }
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) goTo(dx < 0 ? current + 1 : current - 1);
+  });
+
+  // ── LIVE DEMO ───────────────────────────────────
+  const analyzeBtn = document.getElementById('demo-analyze');
+  const askBtn     = document.getElementById('demo-ask');
+  const statusEl   = document.getElementById('demo-status');
+  const kpisEl     = document.getElementById('demo-kpis');
+  const answerEl   = document.getElementById('demo-answer');
+  const respEl     = document.getElementById('demo-response');
+
+  analyzeBtn.addEventListener('click', () => {
+    if (analyzeBtn.disabled) return;
+    analyzeBtn.disabled = true;
+    statusEl.innerHTML = '<span class="live-dot"></span> Analyzing 1,240 employee records · validating data · comparing against policy…';
+    setTimeout(() => {
+      kpisEl.classList.add('show');
+      statusEl.innerHTML = '<span class="live-dot"></span> Analysis complete · 3 insights · ready for questions';
+    }, 1400);
+  });
+
+  function typeLines(el, lines, speed = 20) {
+    el.classList.add('typing');
+    let li = 0, ci = 0;
+    function tick() {
+      if (li >= lines.length) { el.classList.remove('typing'); return; }
+      const line = lines[li];
+      if (ci <= line.length) {
+        el.textContent = lines.slice(0, li).join('\n') + (li > 0 ? '\n' : '') + line.slice(0, ci);
+        ci++;
+        setTimeout(tick, speed);
+      } else {
+        li++;
+        ci = 0;
+        setTimeout(tick, speed * 3);
+      }
+    }
+    tick();
+  }
+
+  askBtn.addEventListener('click', () => {
+    if (askBtn.disabled) return;
+    askBtn.disabled = true;
+    answerEl.classList.add('show');
+    typeLines(respEl, [
+      'Absenteeism increased 12% this month. Primary driver was increased overtime in Ramp Operations.',
+      '',
+      'Four employees exceeded the Attendance Review threshold. If the trend continues, two more will qualify next month.',
+      '',
+      'Recommendations:',
+      '• Reduce overtime in Ramp Operations',
+      '• Schedule attendance reviews for the four employees',
+      '• Monitor Monday absences — the highest-risk day',
+      '',
+      'Ready to draft the manager brief for any department.'
+    ]);
+  });
+</script>
+</body>
+</html>
