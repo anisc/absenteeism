@@ -316,6 +316,23 @@
   .modal-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-bottom: 6px; }
   .modal-stat-value { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.5px; }
   .modal-stat-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .modal-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .modal-stat { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .modal-chart { position: relative; height: 180px; }
+  .modal-section { margin-bottom: 22px; }
+  .code-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+  .code-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+  .code-card-value { font-size: 22px; font-weight: 800; color: var(--text); }
+  .code-card-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th, .data-table td { padding: 10px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .data-table th { color: var(--muted); text-transform: uppercase; font-size: 10px; font-weight: 600; }
+  .data-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+  .tier-badge { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+  .tier-critical { background: var(--red); color: #fff; }
+  .tier-high { background: #f97316; color: #fff; }
+  .tier-medium { background: var(--amber); color: #000; }
+  .tier-low { background: var(--green); color: #fff; }
   .bradford-gauge-wrap {
     display: flex; align-items: center; gap: 16px;
     background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px; border: 1px solid var(--border);
@@ -651,7 +668,7 @@
       <div class="rail-title">Employee · click to drill in</div>
       <button class="hot" data-panel="emp-profile">
         <span class="hi">👤</span>
-        <span>Supervisor Profile<small class="hd">Single view of a the employee</small></span>
+        <span>Supervisor Profile<small class="hd">Single view of the employee</small></span>
         <span class="stepno">7</span>
       </button>
       <button class="hot" data-panel="emp-trends">
@@ -781,131 +798,11 @@
 <!-- ── EMPLOYEE DETAIL MODAL (from dashboard.html) ── -->
 <div class="modal-overlay" id="empModal" onclick="if(event.target===this)closeEmployeeModal()">
   <div class="modal-panel">
-    <div class="modal-header">
-      <div>
-        <div style="font-size:16px;font-weight:800;letter-spacing:-0.3px;" id="modal-emp-id">Supervisor</div>
-        <div style="font-size:12px;color:#64748b;margin-top:3px;" id="modal-subtitle"></div>
-      </div>
+    <div class="modal-header" style="justify-content:flex-end;border-bottom:1px solid var(--border);padding:12px 18px;margin:0;flex-shrink:0;">
       <button class="modal-close" onclick="closeEmployeeModal()">✕</button>
     </div>
-    <div class="modal-body">
-
-      <!-- KPI Strip -->
-      <div class="modal-profile">
-        <div class="modal-stat-card">
-          <div class="modal-stat-label">Risk Score</div>
-          <div class="modal-stat-value" id="modal-risk">—</div>
-          <div class="modal-stat-sub">Seniority-weighted</div>
-        </div>
-        <div class="modal-stat-card">
-          <div class="modal-stat-label">Combined Score</div>
-          <div class="modal-stat-value" id="modal-combined">—</div>
-          <div class="modal-stat-sub">Risk + Bradford</div>
-        </div>
-        <div class="modal-stat-card">
-          <div class="modal-stat-label">Bradford Factor</div>
-          <div class="modal-stat-value" id="modal-bradford">—</div>
-          <div class="modal-stat-sub">S² × D formula</div>
-        </div>
-        <div class="modal-stat-card">
-          <div class="modal-stat-label">Total Absences</div>
-          <div class="modal-stat-value" id="modal-total-abs">—</div>
-          <div class="modal-stat-sub">FY 2025 events</div>
-        </div>
-      </div>
-      <div class="modal-profile">
-        <div class="modal-stat-card" style="padding:12px 16px;">
-          <div class="modal-stat-label">Seniority</div>
-          <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-top:5px;" id="modal-seniority">—</div>
-        </div>
-        <div class="modal-stat-card" style="padding:12px 16px;">
-          <div class="modal-stat-label">Employment Type</div>
-          <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-top:5px;" id="modal-carrier">—</div>
-        </div>
-      </div>
-
-      <!-- Bradford Gauge -->
-      <div>
-        <div class="modal-section-title">📊 Bradford Factor Gauge</div>
-        <div class="bradford-gauge-wrap">
-          <div style="flex-shrink:0;" id="modal-bradford-tier"></div>
-          <div class="bradford-gauge-bar">
-            <div class="bradford-gauge-fill" id="modal-bradford-fill" style="width:0%"></div>
-          </div>
-        </div>
-        <div class="bradford-thresholds">
-          <div class="bft-dot"><span style="color:#10b981;font-size:9px">●</span>&nbsp;&lt;10 Clean</div>
-          <div class="bft-dot"><span style="color:#f59e0b;font-size:9px">●</span>&nbsp;10–199 Monitor</div>
-          <div class="bft-dot"><span style="color:#f97316;font-size:9px">●</span>&nbsp;200–899 Caution</div>
-          <div class="bft-dot"><span style="color:#ef4444;font-size:9px">●</span>&nbsp;≥900 Formal Action</div>
-        </div>
-      </div>
-
-      <!-- Absence Code Breakdown -->
-      <div>
-        <div class="modal-section-title">📋 Absence Code Breakdown</div>
-        <div id="modal-abs-breakdown"></div>
-      </div>
-
-      <!-- Pattern Analysis / Reasonable Doubt -->
-      <div>
-        <div class="modal-section-title">🕵️ Seasonal Pattern Analysis (Reasonable Doubt)</div>
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:12px;line-height:1.5;">
-          Yearly sick absence distribution compared to fleet benchmark. Identifies high-risk event periods (Christmas,
-          Stampede, etc.). When clear pattern exists, the <strong>"reasonable doubt"</strong> standard may be met to
-          request a medical certificate from the employee, even under 5 days duration.
-        </div>
-        <div style="display:flex;gap:12px;margin-bottom:12px;background:rgba(255,255,255,0.03);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
-          <div>
-            <label style="display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Supervisor Birthday Month</label>
-            <select id="modal-bday-month" class="filter-select" style="width:140px;" onchange="updateModalPatternChart()">
-              <option value="">-- Not Analyzed --</option>
-              <option value="0">January</option>
-              <option value="1">February</option>
-              <option value="2">March</option>
-              <option value="3">April</option>
-              <option value="4">May</option>
-              <option value="5">June</option>
-              <option value="6">July</option>
-              <option value="7">August</option>
-              <option value="8">September</option>
-              <option value="9">October</option>
-              <option value="10">November</option>
-              <option value="11">December</option>
-            </select>
-          </div>
-          <div>
-            <label style="display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Target Event / Holiday Pattern</label>
-            <select id="modal-event-select" class="filter-select" style="width:200px;" onchange="updateModalPatternChart()">
-              <option value="none">-- Default Automated Analysis --</option>
-              <option value="christmas">Christmas & New Year (Dec)</option>
-              <option value="easter">Easter Weekend (Mar/Apr)</option>
-              <option value="stampede">Stampede / Summer Peak (Jul)</option>
-              <option value="thanksgiving">Thanksgiving (Oct)</option>
-            </select>
-          </div>
-        </div>
-        <div style="background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;position:relative;">
-          <div style="position:relative;height:180px;"><canvas id="modalPatternChart"></canvas></div>
-          <div id="pattern-doubt-flag" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;border-radius:4px;font-size:11px;color:#fca5a5;line-height:1.4;"></div>
-        </div>
-      </div>
-
-      <!-- HR Action Recommendations -->
-      <div>
-        <div class="modal-section-title">🏢 HR Action Recommendations</div>
-        <div style="font-size:11px;color:#475569;margin-bottom:12px;line-height:1.6;">
-          Recommendations are <strong>auto-generated</strong> based on this supervisor's absence profile.
-          All actions must be reviewed by a qualified HR / Labour Relations professional before implementation.
-          <span style="color:#f59e0b;">⚠️ POC Only.</span>
-        </div>
-        <div id="modal-hr-actions"></div>
-      </div>
-
-      <div style="text-align:center;padding:16px 0 4px;font-size:10px;color:#334155;line-height:1.6;">
-        ⚠️ Proof of Concept · For HR Internal Use Only<br>
-        Recommendations require professional HR judgment and compliance review before any action is taken
-      </div>
+    <div class="modal-body" style="padding:26px 30px;gap:0;">
+      <div id="modal-content"></div>
     </div>
   </div>
 </div>
@@ -1268,91 +1165,17 @@
       '5. Offer EAP / wellness support — no discipline step at this stage.';
   })();
 
-  // ── EMPLOYEE DETAIL MODAL (from dashboard.html) ──
-  const DEMO_EMPLOYEES = {
-    4464: {
-      emp: 4464, emp_num: 36484, carrier: 'WS', base: 'YVR', position: 'FA',
-      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 18261,
-      total_absences: 94,
-      codes: { SCK: 52, UAV: 35, LSK: 4, PDP: 3 },
-      monthly_events: {
-        LSK: [1,1,0,0,0,0,0,0,0,1,1,0],
-        PDP: [0,0,0,0,2,0,0,0,1,0,0,0],
-        SCK: [9,3,0,9,0,3,0,5,7,11,1,4],
-        UAV: [0,1,4,0,0,0,15,9,4,0,2,0]
-      },
-      monthly_sck_events: [9,3,0,9,0,3,0,5,7,11,1,4],
-      bradford: 70560, risk_score: 382.6, combined_score: 453.2,
-      nsp: 0, laa: 0, lsk: 4, bev: 0, sbl: 0,
-      attendance_program_qualified: true,
-      attendance_program_reason: 'Both',
-      attendance_program_type: 'Reactive'
-    },
-    747: {
-      emp: 747, emp_num: 6690, carrier: 'WS', base: 'YEG', position: 'FA',
-      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 28805,
-      total_absences: 69,
-      codes: { SCK: 47, LSK: 17, UAV: 4, LAA: 1 },
-      monthly_events: {
-        LAA: [0,0,0,0,0,1,0,0,0,0,0,0],
-        LSK: [3,0,5,2,2,0,1,2,0,0,0,2],
-        SCK: [9,7,10,3,4,2,4,3,0,0,1,4],
-        UAV: [0,0,1,2,0,0,1,0,0,0,0,0]
-      },
-      monthly_sck_events: [9,7,10,3,4,2,4,3,0,0,1,4],
-      bradford: 60112, risk_score: 361.6, combined_score: 421.7,
-      nsp: 0, laa: 1, lsk: 17, bev: 0, sbl: 0,
-      attendance_program_qualified: true,
-      attendance_program_reason: 'Both',
-      attendance_program_type: 'Reactive'
-    },
-    2129: {
-      emp: 2129, emp_num: 16536, carrier: 'WS', base: 'YYZ', position: 'FA',
-      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 15771,
-      total_absences: 68,
-      codes: { SCK: 26, UAV: 8, LSK: 7, SBL: 7, BRU: 5, BEV: 5, PDU: 4, PDP: 3, LAA: 2, NSP: 1 },
-      monthly_events: {
-        BEV: [0,0,0,0,0,0,1,4,0,0,0,0],
-        BRU: [0,0,0,0,0,0,0,5,0,0,0,0],
-        LAA: [0,1,0,1,0,0,0,0,0,0,0,0],
-        LSK: [2,0,1,1,0,1,1,0,1,0,0,0],
-        NSP: [0,0,0,0,0,0,1,0,0,0,0,0],
-        PDP: [0,3,0,0,0,0,0,0,0,0,0,0],
-        PDU: [0,4,0,0,0,0,0,0,0,0,0,0],
-        SBL: [0,0,0,5,0,0,0,2,0,0,0,0],
-        SCK: [2,4,6,2,3,4,5,0,0,0,0,0],
-        UAV: [0,0,0,0,0,8,0,0,0,0,0,0]
-      },
-      monthly_sck_events: [2,4,6,2,3,4,5,0,0,0,0,0],
-      bradford: 37500, risk_score: 316.5, combined_score: 354.0,
-      nsp: 1, laa: 2, lsk: 7, bev: 5, sbl: 7,
-      attendance_program_qualified: true,
-      attendance_program_reason: 'Both',
-      attendance_program_type: 'Reactive'
-    },
-    5484: {
-      emp: 5484, emp_num: 40787, carrier: 'WS', base: 'YWG', position: 'FA',
-      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 40936,
-      total_absences: 62,
-      codes: { SCK: 21, UAV: 15, SBL: 11, LSK: 11, NSP: 2, FAT: 1, COS: 1 },
-      monthly_events: {
-        COS: [0,1,0,0,0,0,0,0,0,0,0,0],
-        FAT: [0,0,0,0,1,0,0,0,0,0,0,0],
-        LSK: [1,0,0,2,4,1,1,2,0,0,0,0],
-        NSP: [0,0,0,0,0,0,1,0,0,0,0,1],
-        SBL: [0,0,0,4,0,0,0,6,1,0,0,0],
-        SCK: [3,0,1,0,5,5,3,4,0,0,0,0],
-        UAV: [0,0,0,0,1,4,5,1,4,0,0,0]
-      },
-      monthly_sck_events: [3,0,1,0,5,5,3,4,0,0,0,0],
-      bradford: 26979, risk_score: 320.8, combined_score: 347.8,
-      nsp: 2, laa: 0, lsk: 11, bev: 0, sbl: 11,
-      attendance_program_qualified: true,
-      attendance_program_reason: 'Both',
-      attendance_program_type: 'Reactive'
-    }
+  // ── SUPERVISOR TEAM MODAL (dashboard2-style, real FY2025 data) ──
+  const SUP_BY_CREW = { 4464: 18261, 747: 28805, 2129: 15771, 5484: 40936 };
+
+  const SUPS = {
+    18261: { base: 'YVR', n: 166, avgRisk: 56.4, avgCombined: 59.1, avgBrad: 2653, qualPct: 72.3, totAbs: 2718, nsp: 14, sbl: 90, tiers: [3, 13, 77, 73], monthly: [149, 117, 170, 177, 139, 166, 171, 158, 125, 131, 94, 174], score: 459, tier: 'critical', codes: [['SCK', 1771], ['PDP', 295], ['UAV', 136], ['BEV', 99], ['SBL', 90], ['FAT', 84], ['PDU', 77], ['LAA', 38]], top: [[36484, 'YVR', 'FA', 382.6, 453.2, 70560], [40943, 'YVR', 'FA', 222.9, 226.1, 3200], [41393, 'YVR', 'FA', 187.4, 209.2, 21780], [38108, 'YVR', 'FA', 138.1, 148.8, 10693], [38525, 'YVR', 'FA', 124.1, 136.4, 12312], [35081, 'YVR', 'FA', 116.2, 119.6, 3400], [4811, 'YVR', 'FA', 117.9, 119.0, 1088], [35087, 'YVR', 'FA', 110.9, 118.1, 7200], [40570, 'YVR', 'FA', 100.9, 113.2, 12274], [40690, 'YVR', 'FA', 110.1, 113.1, 3042]] },
+    28805: { base: 'YEG', n: 146, avgRisk: 60.9, avgCombined: 64.6, avgBrad: 3656, qualPct: 73.3, totAbs: 2519, nsp: 19, sbl: 106, tiers: [5, 17, 60, 64], monthly: [176, 137, 168, 143, 139, 139, 171, 162, 113, 84, 73, 134], score: 522, tier: 'critical', codes: [['SCK', 1639], ['PDP', 246], ['UAV', 129], ['SBL', 106], ['BEV', 97], ['LSK', 95], ['PDU', 68], ['LAA', 33]], top: [[6690, 'YEG', 'FA', 361.6, 421.7, 60112], [13520, 'YEG', 'FA', 261.3, 306.8, 45472], [38586, 'YEG', 'FA', 156.4, 185.6, 29160], [41740, 'YEG', 'FA', 145.1, 175.7, 30576], [41639, 'YEG', 'FA', 138.0, 164.4, 26364], [41099, 'YEG', 'FA', 135.4, 141.1, 5684], [41554, 'YEG', 'FA', 125.8, 135.0, 9216], [38787, 'YEG', 'FA', 122.9, 132.1, 9216], [42868, 'YEG', 'FA', 119.7, 126.8, 7056], [38203, 'YEG', 'FA', 117.1, 126.2, 9072]] },
+    15771: { base: 'YYZ', n: 181, avgRisk: 62.8, avgCombined: 65.9, avgBrad: 3102, qualPct: 75.7, totAbs: 3189, nsp: 23, sbl: 82, tiers: [12, 16, 76, 77], monthly: [185, 214, 214, 173, 171, 175, 191, 175, 128, 135, 122, 244], score: 490, tier: 'critical', codes: [['SCK', 2127], ['PDP', 376], ['UAV', 165], ['BEV', 116], ['LSK', 100], ['SBL', 82], ['PDU', 77], ['FAT', 44]], top: [[16536, 'YYZ', 'FA', 316.5, 354.0, 37500], [23986, 'YYZ', 'FA', 271.3, 300.3, 29040], [24903, 'YYZ', 'FA', 235.9, 258.8, 22932], [17850, 'YYZ', 'FA', 186.6, 198.9, 12312], [29944, 'YYZ', 'FA', 178.3, 197.9, 19600], [28714, 'YYZ', 'FA', 178.5, 195.3, 16848], [6701, 'YYZ', 'FA', 155.7, 177.6, 21870], [22135, 'YYZ', 'FA', 162.5, 168.0, 5472], [14668, 'YYZ', 'FA', 153.9, 161.6, 7680], [26248, 'YYZ', 'FA', 147.4, 160.2, 12800]] },
+    40936: { base: 'YWG', n: 122, avgRisk: 50.5, avgCombined: 52.8, avgBrad: 2287, qualPct: 67.2, totAbs: 1842, nsp: 14, sbl: 68, tiers: [4, 7, 41, 70], monthly: [68, 61, 86, 96, 79, 115, 121, 137, 71, 48, 106, 167], score: 385, tier: 'critical', codes: [['SCK', 1155], ['PDP', 221], ['FAT', 79], ['BEV', 72], ['UAV', 72], ['SBL', 68], ['LSK', 55], ['PDU', 43]], top: [[40787, 'YWG', 'FA', 320.8, 347.8, 26979], [40549, 'YWG', 'FA', 148.3, 168.9, 20631], [34781, 'YWG', 'FA', 150.6, 162.6, 12000], [40541, 'YWG', 'FA', 142.1, 154.4, 12348], [5950, 'YWG', 'FA', 128.6, 141.2, 12584], [40796, 'YWG', 'FA', 121.3, 140.3, 18963], [35455, 'YWG', 'FA', 121.3, 134.9, 13600], [10590, 'YWG', 'FA', 124.2, 128.4, 4176], [8482, 'YWG', 'FA', 110.7, 120.8, 10108], [40760, 'YWG', 'FA', 99.7, 105.8, 6069]] }
   };
-  const DEMO_EMPLOYEE = DEMO_EMPLOYEES[4464];
+  const DEMO_EMPLOYEE = { emp: 4464 };
+
 
   const CODE_COLORS_MODAL = {
     SCK: '#3b82f6', NSP: '#ef4444', LAA: '#f97316', LSK: '#f59e0b',
@@ -1365,12 +1188,9 @@
     BEV: 'Bereavement', BRU: 'Bereavement Unpaid', PDP: 'Personal Paid',
     PDU: 'Personal Unpaid', COS: 'Not Mtg Standards', UFT: 'Other'
   };
-  const RISK_WEIGHT_MODAL = {
-    NSP: 10, LAA: 8, LSK: 7, COS: 7, SBL: 6, UAV: 5, FAT: 4, SCK: 3, PDU: 2, UFT: 2, BEV: 2, BRU: 2, PDP: 1
-  };
 
   let currentModalEmployee = null;
-  let modalPatternChart = null;
+  let supChart = null;
 
   function riskTier(score) {
     if (score >= 150) return { label: 'CRITICAL', cls: 'critical' };
@@ -1378,118 +1198,84 @@
     if (score >= 50) return { label: 'MEDIUM', cls: 'medium' };
     return { label: 'LOW', cls: 'low' };
   }
-  function combinedTier(score) {
-    if (score >= 200) return { label: 'CRITICAL', cls: 'critical' };
-    if (score >= 120) return { label: 'HIGH', cls: 'high' };
-    if (score >= 80) return { label: 'MEDIUM', cls: 'medium' };
-    return { label: 'LOW', cls: 'low' };
-  }
 
-  function openEmployeeModal(empId) {
-    const e = DEMO_EMPLOYEES[empId] || null;
-    if (!e) return;
-    currentModalEmployee = e;
+  function openEmployeeModal(crewEmpId) {
+    const supNum = SUP_BY_CREW[crewEmpId] || DEMO_EMPLOYEE.emp;
+    const s = SUPS[supNum];
+    if (!s) return;
+    currentModalEmployee = s;
 
-    document.getElementById('modal-bday-month').value = "";
-    document.getElementById('modal-event-select').value = "none";
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const tierColors = { critical: 'var(--red)', high: '#f97316', medium: 'var(--amber)', low: 'var(--green)' };
+    const codeTotals = s.codes;
 
-    const tier = riskTier(e.risk_score);
-    const combTier = combinedTier(e.combined_score);
-    const tierColors = { critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#10b981' };
-    const tierColor = tierColors[tier.cls];
-    const combTierColor = tierColors[combTier.cls];
-    const seniorityLabel = e.emp_num < 5000 ? '⭐⭐ Very Senior (Top 5K)'
-      : e.emp_num < 15000 ? '⭐ Senior'
-        : e.emp_num < 30000 ? 'Mid-Seniority'
-          : 'Junior';
-    const posFullLabel = {
-      FA: 'Flight Attendant', CA: 'Captain', FO: 'First Officer',
-      RA: 'Relief Attendant', RF: 'Relief First Officer',
-      RC: 'Relief Captain', FL: 'Flight Attendant Leader'
-    };
+    const codeBreakdown = codeTotals.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
-    document.getElementById('modal-emp-id').textContent = 'Supervisor #' + e.emp_num;
-    document.getElementById('modal-subtitle').innerHTML =
-      (posFullLabel[e.position] || e.position) + ' &nbsp;·&nbsp; ' + e.base +
-      ' &nbsp;·&nbsp; ' + e.carrier +
-      ' &nbsp;·&nbsp; <span style="color:' + tierColor + ';font-weight:700;">' + tier.label + ' RISK</span>' +
-      ' &nbsp;·&nbsp; <span style="color:' + combTierColor + ';font-weight:700;">' + combTier.label + ' COMBINED</span>';
-
-    const rs = document.getElementById('modal-risk');
-    rs.textContent = e.risk_score; rs.style.color = tierColor;
-    const bf = document.getElementById('modal-bradford');
-    bf.textContent = e.bradford.toLocaleString(); bf.style.color = tierColor;
-    const cs = document.getElementById('modal-combined');
-    if (cs) { cs.textContent = e.combined_score; cs.style.color = combTierColor; }
-    document.getElementById('modal-total-abs').textContent = e.total_absences;
-    document.getElementById('modal-seniority').textContent = seniorityLabel;
-    document.getElementById('modal-carrier').textContent = e.carrier + (e.ft_pt ? ' · ' + (e.ft_pt.includes('Full') ? 'Full-time' : 'Part-time') : '');
-
-    const maxBradRef = 830584;
-    const gaugeW = Math.min(100, (Math.log(e.bradford + 1) / Math.log(maxBradRef + 1)) * 100);
-    document.getElementById('modal-bradford-fill').style.width = gaugeW + '%';
-    const bfTier = e.bradford < 10 ? { label: 'Below Trigger', cls: 'low' }
-      : e.bradford < 200 ? { label: 'Monitor', cls: 'medium' }
-        : e.bradford < 900 ? { label: 'Caution Zone', cls: 'warning' }
-          : { label: 'Formal Action', cls: 'critical' };
-    document.getElementById('modal-bradford-tier').innerHTML =
-      '<span class="risk-badge ' + bfTier.cls + '" style="font-size:10px;">' + bfTier.label + '</span>';
-
-    const sortedCodes = Object.entries(e.codes).sort((a, b) => b[1] - a[1]);
-    const maxC = sortedCodes[0]?.[1] || 1;
-    document.getElementById('modal-abs-breakdown').innerHTML = sortedCodes.map(([code, count]) => {
-      const color = CODE_COLORS_MODAL[code] || '#64748b';
-      const label = CODE_LABELS_MODAL[code] || code;
-      const pct = Math.round((count / maxC) * 100);
-      const w = RISK_WEIGHT_MODAL[code] || 1;
-      return '<div class="abs-row">'
-        + '<div class="abs-code-label"><span class="abs-code-badge">' + code + '</span>'
-        + '<span style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;" title="' + label + '">' + label + '</span></div>'
-        + '<div class="abs-bar-wrap"><div class="abs-bar-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>'
-        + '<div class="abs-count" style="color:' + color + '">' + count + '</div>'
-        + '<div style="width:30px;text-align:right;font-size:9px;color:#475569;font-weight:600;">×' + w + '</div>'
-        + '</div>';
-    }).join('');
-
-    renderModalPatternChart(e);
-
-    const recs = generateHRRecommendations(e);
-
-    let programCard = '';
-    if (e.attendance_program_qualified) {
-      const isProactive = e.attendance_program_type === 'Proactive';
-      const cardTitle = isProactive ? '🎯 Proactive Enrollment — Attendance Management Support Program' : '🚨 Reactive Enrollment — Attendance Management Support Program';
-      const cardDesc = isProactive
-        ? 'This crew member qualifies for <strong>Proactive Enrollment</strong> (90-Day Rule only). Early intervention recommended before absence pattern becomes established. '
-        + 'Reason: <strong>' + e.attendance_program_reason + '</strong>.'
-        : 'This crew member qualifies for <strong>Reactive Enrollment</strong> (12-Month Rule triggered). Absence pattern is already established, requiring immediate formal intervention. '
-        + 'Reason: <strong>' + e.attendance_program_reason + '</strong>.';
-      const timingNote = isProactive
-        ? '<li><strong>Proactive approach:</strong> Intervene now to prevent reaching 12-month threshold (≥13 absences)</li>'
-        : '<li><strong>Reactive approach:</strong> Pattern already established — immediate formal intervention required</li>';
-
-      programCard = '<div class="hr-action-card support" style="animation-delay:0s">'
-        + '<div class="hr-action-title">' + cardTitle + '</div>'
-        + '<div class="hr-action-desc">' + cardDesc + '</div>'
-        + '<ul class="hr-action-steps">'
-        + '<li>Send formal enrollment letter outlining program requirements and support resources</li>'
-        + '<li>Schedule intake meeting within ' + (isProactive ? '5' : '2') + ' business days</li>'
-        + '<li>Assign a dedicated attendance coach/supervisor for regular check-ins</li>'
-        + '<li>Set 30-60-90 day review milestones with clear improvement targets</li>'
-        + '<li>Provide access to EAP, Occupational Health, and wellness resources</li>'
-        + timingNote
-        + '<li>Document all interactions in the attendance management file</li>'
-        + '</ul>'
-        + '</div>';
-    }
-
-    document.getElementById('modal-hr-actions').innerHTML = programCard + recs.map((r, idx) =>
-      '<div class="hr-action-card ' + r.cls + '" style="animation-delay:' + (e.attendance_program_qualified ? (idx + 1) * 0.06 : idx * 0.06) + 's">'
-      + '<div class="hr-action-title">' + r.icon + ' ' + r.title + '</div>'
-      + '<div class="hr-action-desc">' + r.desc + '</div>'
-      + (r.steps ? '<ul class="hr-action-steps">' + r.steps.map(s => '<li>' + s + '</li>').join('') + '</ul>' : '')
-      + '</div>'
+    const teamRows = s.top.map(r =>
+      '<tr>'
+      + '<td style="font-weight:700;color:var(--text);">' + r[0] + '</td>'
+      + '<td>' + r[1] + '</td>'
+      + '<td>' + r[2] + '</td>'
+      + '<td style="color:' + tierColors[riskTier(r[3]).cls] + ';font-weight:700;">' + r[3].toFixed(1) + '</td>'
+      + '<td style="color:' + tierColors[riskTier(r[4]).cls] + ';">' + r[4].toFixed(1) + '</td>'
+      + '<td>' + r[5].toLocaleString() + '</td>'
+      + '</tr>'
     ).join('');
+
+    const content = document.getElementById('modal-content');
+    content.innerHTML = `
+      <div class="modal-header" style="margin-bottom:20px;">
+        <div>
+          <div class="modal-title" style="font-size:20px;font-weight:800;">Supervisor #${supNum}</div>
+          <div style="color:var(--muted);font-size:12px;margin-top:4px;">${s.base} · ${s.n} Direct Reports · Ops score ${s.score}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <span class="tier-badge tier-${s.tier}">${s.tier.toUpperCase()}</span>
+        </div>
+      </div>
+      <div class="modal-stats">
+        <div class="modal-stat"><div class="modal-stat-value">${s.avgRisk.toFixed(1)}</div><div class="modal-stat-label">Avg Risk</div></div>
+        <div class="modal-stat"><div class="modal-stat-value">${s.qualPct.toFixed(0)}%</div><div class="modal-stat-label">% Qualified</div></div>
+        <div class="modal-stat"><div class="modal-stat-value">${s.totAbs.toLocaleString()}</div><div class="modal-stat-label">Total Absences</div></div>
+        <div class="modal-stat"><div class="modal-stat-value">${s.avgBrad.toLocaleString()}</div><div class="modal-stat-label">Avg Bradford</div></div>
+        <div class="modal-stat"><div class="modal-stat-value">${s.nsp}</div><div class="modal-stat-label">NSP Total</div></div>
+        <div class="modal-stat"><div class="modal-stat-value">${s.sbl}</div><div class="modal-stat-label">SBL Total</div></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">📈 Monthly Team Absences</div>
+        <div class="modal-chart"><canvas id="supChart"></canvas></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">🎯 Risk Tier Distribution</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          <div class="modal-stat"><div class="modal-stat-value" style="color:var(--red);">${s.tiers[0]}</div><div class="modal-stat-label">Critical</div></div>
+          <div class="modal-stat"><div class="modal-stat-value" style="color:#f97316;">${s.tiers[1]}</div><div class="modal-stat-label">High</div></div>
+          <div class="modal-stat"><div class="modal-stat-value" style="color:var(--amber);">${s.tiers[2]}</div><div class="modal-stat-label">Medium</div></div>
+          <div class="modal-stat"><div class="modal-stat-value" style="color:var(--green);">${s.tiers[3]}</div><div class="modal-stat-label">Low</div></div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">📋 Absence Code Breakdown</div>
+        <div class="code-grid">${codeBreakdown.map(([code, count]) => `
+          <div class="code-card">
+            <div class="code-card-value" style="color:${CODE_COLORS_MODAL[code] || '#94a3b8'};">${count.toLocaleString()}</div>
+            <div class="code-card-label">${CODE_LABELS_MODAL[code] || code}</div>
+          </div>
+        `).join('')}</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">👥 Top-Risk Direct Reports (${s.n} total)</div>
+        <table class="data-table">
+          <thead><tr><th>Emp #</th><th>Base</th><th>Position</th><th>Risk</th><th>Combined</th><th>Bradford</th></tr></thead>
+          <tbody>${teamRows}</tbody>
+        </table>
+      </div>
+      <div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#334155;line-height:1.6;">
+        ⚠️ Proof of Concept · For HR Internal Use Only · Aggregated from the FY2025 dataset
+      </div>
+    `;
+
+    renderSupChart(s.monthly);
 
     const empModal = document.getElementById('empModal');
     empModal.classList.add('open');
@@ -1497,431 +1283,38 @@
   }
 
   function closeEmployeeModal() {
+    if (supChart) { supChart.destroy(); supChart = null; }
     const empModal = document.getElementById('empModal');
     empModal.classList.remove('open');
     document.body.style.overflow = '';
     currentModalEmployee = null;
   }
-
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeEmployeeModal(); });
 
-  function updateModalPatternChart() {
-    if (currentModalEmployee) renderModalPatternChart(currentModalEmployee);
-  }
-
-  function renderModalPatternChart(e) {
-    if (modalPatternChart) modalPatternChart.destroy();
-
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    const sblPts = Array(12).fill(0);
-    const sckPts = Array(12).fill(0);
-    const otherPts = Array(12).fill(0);
-    let totalEvents = 0;
-
-    const evtKeys = Object.keys(e.monthly_events || {});
-    evtKeys.forEach(k => {
-      for (let i = 0; i < 12; i++) {
-        let val = e.monthly_events[k][i] || 0;
-        totalEvents += val;
-        if (k === 'SBL') { sblPts[i] += val; }
-        else if (k === 'SCK' || k === 'LSK') { sckPts[i] += val; }
-        else { otherPts[i] += val; }
-      }
-    });
-
-    const dataPts = Array(12).fill(0).map((_, i) => sblPts[i] + sckPts[i] + otherPts[i]);
-    const sckTotal = totalEvents;
-
-    const bdayMonthStr = document.getElementById('modal-bday-month').value;
-    const bdayMonth = bdayMonthStr !== "" ? parseInt(bdayMonthStr) : null;
-    const targetEvent = document.getElementById('modal-event-select').value;
-
-    const avgMonthly = Math.max(1, sckTotal / 12);
-    const doubtFlag = document.getElementById('pattern-doubt-flag');
-    const spikeThreshold = avgMonthly * 1.5;
-
-    let reasons = [];
-
-    if (sckTotal >= 3) {
-      if (bdayMonth !== null && dataPts[bdayMonth] >= spikeThreshold && dataPts[bdayMonth] > 1) {
-        reasons.push(`Excessive absences during Birthday month (${months[bdayMonth]})`);
-      }
-
-      if (targetEvent !== 'none') {
-        if (targetEvent === 'christmas' && dataPts[11] >= spikeThreshold && dataPts[11] > 1) reasons.push('Excessive absences aligning with Christmas/New Year');
-        if (targetEvent === 'easter' && (dataPts[2] >= spikeThreshold || dataPts[3] >= spikeThreshold) && Math.max(dataPts[2], dataPts[3]) > 1) reasons.push('Excessive absences aligning with Easter Weekend');
-        if (targetEvent === 'stampede' && dataPts[6] >= spikeThreshold && dataPts[6] > 1) reasons.push('Excessive absences aligning with Stampede/Summer peak');
-        if (targetEvent === 'thanksgiving' && dataPts[9] >= spikeThreshold && dataPts[9] > 1) reasons.push('Excessive absences aligning with Thanksgiving (Oct)');
-      }
-
-      if (bdayMonth === null && targetEvent === 'none') {
-        if (dataPts[11] >= spikeThreshold && dataPts[11] > 1) reasons.push('Excessive generic absence events during Christmas/Holidays');
-        if (dataPts[6] >= spikeThreshold && dataPts[6] > 1) reasons.push('Excessive generic absence events during Summer Peak/Events (e.g. Stampede)');
-        if (dataPts[2] >= spikeThreshold && dataPts[2] > 1) reasons.push('Excessive generic absence events around Spring Break');
-      }
-    }
-
-    let sblFlagStr = '';
-    const sblTotal = sblPts.reduce((a, b) => a + b, 0);
-    if (sblTotal > 0) {
-      sblFlagStr = `<div style="margin-top:6px;padding:6px;background:rgba(220,38,38,0.2);border:1px solid #dc2626;border-radius:4px;color:#fca5a5;">🚨 <strong>Vacation Extension Pattern (SBL) Detected:</strong> ${sblTotal} Sick-Before-Leave event(s). Any presence of SBL strongly establishes <strong>Reasonable Doubt</strong>. Demanding immediate medical certificates for future absences is heavily justified under union regulations.</div>`;
-    }
-
-    if (reasons.length > 0 || sblTotal > 0) {
-      doubtFlag.style.display = 'block';
-      let text = '';
-      if (reasons.length > 0) {
-        text += '<strong>⚠️ Suspicious Pattern Detected:</strong> ' + reasons.join(' AND ') + '. ';
-        text += '<br>High probability of "Reasonable Doubt" standard met for medical certificate request.';
-      }
-      text += sblFlagStr;
-      doubtFlag.innerHTML = text;
-    } else {
-      doubtFlag.style.display = 'none';
-    }
-
-    const fleetAvg = Array(12).fill(Math.max(1, Math.round(sckTotal / 12 * 0.65)));
-
-    const ctx = document.getElementById('modalPatternChart').getContext('2d');
-    modalPatternChart = new Chart(ctx, {
-      type: 'bar',
+  function renderSupChart(monthly) {
+    const canvas = document.getElementById('supChart');
+    if (!canvas) return;
+    const prev = supChart || Chart.getChart(canvas);
+    if (prev) prev.destroy();
+    const ctx = canvas.getContext('2d');
+    supChart = new Chart(ctx, {
+      type: 'line',
       data: {
-        labels: months,
-        datasets: [
-          {
-            label: 'Fleet Avg',
-            data: fleetAvg,
-            type: 'line',
-            borderColor: '#64748b',
-            borderWidth: 2,
-            borderDash: [4, 4],
-            pointRadius: 0,
-            tension: 0.4,
-          },
-          {
-            label: 'Sick Before Leave (SBL)',
-            data: sblPts,
-            backgroundColor: '#dc2626',
-            borderColor: '#b91c1c',
-            borderWidth: 1,
-            borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 },
-            stack: 'Stack 0'
-          },
-          {
-            label: 'Normal Sick (SCK/LSK)',
-            data: sckPts,
-            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-            borderColor: '#3b82f6',
-            borderWidth: 1,
-            borderRadius: 0,
-            stack: 'Stack 0'
-          },
-          {
-            label: 'Other Absences',
-            data: otherPts,
-            backgroundColor: 'rgba(100, 116, 139, 0.5)',
-            borderColor: '#64748b',
-            borderWidth: 1,
-            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-            stack: 'Stack 0'
-          }
-        ]
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{ data: monthly, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#3b82f6' }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true, labels: { color: '#94a3b8', font: { size: 10 } } },
-          datalabels: { display: false }
-        },
+        plugins: { legend: { display: false } },
         scales: {
-          x: {
-            stacked: true,
-            grid: { color: 'rgba(255,255,255,0.04)' },
-            ticks: { color: '#64748b', font: { size: 10 } }
-          },
-          y: {
-            stacked: true,
-            beginAtZero: true,
-            grid: { color: 'rgba(255,255,255,0.04)' },
-            ticks: { color: '#64748b', font: { size: 10 }, precision: 0 }
-          }
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } }, beginAtZero: true }
         }
       }
     });
   }
 
-  function generateHRRecommendations(e) {
-    const recs = [];
-    const bev = (e.codes.BEV || 0) + (e.codes.BRU || 0);
-    const fat = e.codes.FAT || 0;
-    const nsp = e.codes.NSP || 0;
-    const laa = e.codes.LAA || 0;
-    const lsk = e.codes.LSK || 0;
-    const sbl = e.codes.SBL || 0;
-    const sck = e.codes.SCK || 0;
-    const cos = e.codes.COS || 0;
-    const uav = e.codes.UAV || 0;
-
-    if (nsp >= 3) {
-      recs.push({
-        cls: 'urgent', icon: '🚫',
-        title: 'DISCIPLINARY ACTION — Repeat No-Show Pairing (NSP×' + nsp + ')',
-        desc: '<strong>' + nsp + ' no-show pairing events</strong> is the most severe absence category. Unacceptable frequency — formal disciplinary process required immediately.',
-        steps: [
-          'Issue Step 2+ written warning per Attendance Management Policy',
-          'Schedule mandatory meeting with HR & direct supervisor within 5 business days',
-          'Implement 90-day Attendance Management Plan (AMP) with clear milestones',
-          'Any further NSP within AMP period → escalate to suspension / termination',
-          'Engage Labour Relations if unionized — document all steps meticulously'
-        ]
-      });
-    } else if (nsp > 0) {
-      recs.push({
-        cls: 'warning', icon: '⚠️',
-        title: 'Attendance Counseling — No-Show on Record (NSP×' + nsp + ')',
-        desc: '<strong>' + nsp + ' no-show pairing event' + (nsp > 1 ? 's' : '') + '</strong>. Formal counseling session required to communicate expectations and document the conversation.',
-        steps: [
-          'Conduct return-to-duty interview and document outcome',
-          'Issue verbal / Step 1 written notice per attendance policy',
-          'Monitor for 60 days — any recurrence triggers escalation'
-        ]
-      });
-    }
-
-    if (cos > 0) {
-      recs.push({
-        cls: 'urgent', icon: '📋',
-        title: 'Performance Investigation — Not Meeting Company Standards (COS×' + cos + ')',
-        desc: '<strong>' + cos + ' COS event' + (cos > 1 ? 's' : '') + '</strong> may indicate conduct, performance, or compliance failures. Investigation required before any disciplinary decision.',
-        steps: [
-          'Initiate formal performance investigation with supporting documentation',
-          'Review incident reports and operations logs for each COS event',
-          'Engage Employee Relations / Labour Relations before issuing discipline',
-          'Progressive discipline: verbal → written → suspension → termination if pattern continues'
-        ]
-      });
-    }
-
-    if (laa >= 4) {
-      recs.push({
-        cls: 'warning', icon: '⏰',
-        title: 'Formal Attendance Management — Chronic Late Arrivals (LAA×' + laa + ')',
-        desc: '<strong>' + laa + ' late-for-shift events</strong> is a persistent pattern that triggers formal attendance management.',
-        steps: [
-          'Issue Step 1 or Step 2 written warning based on prior record',
-          'Implement Attendance Improvement Plan (AIP) with 90-day review',
-          'Discuss potential root causes: commute, scheduling, personal circumstances',
-          'Include EAP referral talking points if personal issues are mentioned'
-        ]
-      });
-    } else if (laa > 0) {
-      recs.push({
-        cls: 'caution', icon: '⏰',
-        title: 'Attendance Counseling — Late Arrivals on Record (LAA×' + laa + ')',
-        desc: '<strong>' + laa + ' late arrival' + (laa > 1 ? 's' : '') + '</strong>. Informal coaching before this pattern escalates.',
-        steps: [
-          'Arrange informal 1-on-1 with direct supervisor',
-          'Document discussion and set clear expectations',
-          'Flag for 30-day monitoring'
-        ]
-      });
-    }
-
-    if (lsk >= 3) {
-      recs.push({
-        cls: 'warning', icon: '📞',
-        title: 'Late Sick Call Pattern — Formal Counseling Required (LSK×' + lsk + ')',
-        desc: '<strong>' + lsk + ' late sick calls</strong> represent repeated failure to follow call-out procedures, creating operational disruption.',
-        steps: [
-          'Remind employee of minimum notification window (typically 1–2 hrs before shift)',
-          'Issue written notice if procedural breaches confirmed',
-          'Monitor for 60 days — escalate if pattern continues'
-        ]
-      });
-    } else if (lsk > 0) {
-      recs.push({
-        cls: 'caution', icon: '📞',
-        title: 'Late Sick Call — Procedure Reminder (LSK×' + lsk + ')',
-        desc: '<strong>' + lsk + ' late sick call event' + (lsk > 1 ? 's' : '') + '</strong>. Ensure employee is aware of the notification requirements.',
-        steps: [
-          'Verbal reminder of call-out window and collective agreement obligations',
-          'Document as informal counseling'
-        ]
-      });
-    }
-
-    if (sbl >= 3) {
-      recs.push({
-        cls: 'caution', icon: '🗓️',
-        title: 'Sick-Before-Leave Pattern — Reasonable Doubt Met (SBL×' + sbl + ')',
-        desc: '<strong>' + sbl + ' Sick-Before-Leave events.</strong> Sick Before Leave (SBL) means that the employee took sick days just before their scheduled vacation or leave, usually to artificially make their vacations longer. This manipulation clearly establishes the <strong>"Reasonable Doubt"</strong> standard to bypass union the 5-day rule.',
-        steps: [
-          'Mandate a formal Medical Certificate for any future absences attached to scheduled leave',
-          'Present the documented SBL data pattern during their attendance review meeting',
-          'If health/stress barriers are claimed → refer to Occupational Health for verification',
-          "Document SBL pattern in the employee's official attendance file"
-        ]
-      });
-    } else if (sbl > 0) {
-      recs.push({
-        cls: 'info', icon: '🗓️',
-        title: 'Sick-Before-Leave — Monitor for Vacation Padding (SBL×' + sbl + ')',
-        desc: '<strong>' + sbl + ' SBL event' + (sbl > 1 ? 's' : '') + '.</strong> (SBL: taking sick days just before scheduled vacation to make vacations longer). Monitor closely.',
-        steps: ['Flag future SBL events. If the pattern repeats, union regulations will allow mandating medical certificates based on reasonable doubt.']
-      });
-    }
-
-    if (bev > 0) {
-      if (bev >= 3) {
-        recs.push({
-          cls: 'support', icon: '💜',
-          title: '🧠 Mental Health Intervention — Multiple Bereavement Events (BEV/BRU×' + bev + ')',
-          desc: '<strong>' + bev + ' bereavement events</strong> in a single year represents significant cumulative grief. This can cause depression, anxiety, PTSD, and complex grief — directly linked to elevated absenteeism. A proactive, compassionate intervention is critical.',
-          steps: [
-            '🤝 Initiate a warm (personal) referral to the Employee Assistance Program (EAP)',
-            '🧠 Coordinate with Occupational Health for a psychological wellness assessment',
-            '📅 Schedule a confidential, non-disciplinary check-in with HR',
-            '🗓️ Consider temporary scheduling accommodations to reduce operational stress',
-            '⚠️ Do NOT include bereavement events in punitive Bradford calculations',
-            "📚 Refer to WestJet's Mental Health in the Workplace resources",
-            '→ If employee appears at-risk: escalate to mental health first aid protocol'
-          ]
-        });
-      } else {
-        recs.push({
-          cls: 'support', icon: '💜',
-          title: 'Compassionate Support — Bereavement on Record (BEV/BRU×' + bev + ')',
-          desc: '<strong>' + bev + ' bereavement event' + (bev > 1 ? 's' : '') + '</strong>. While this is a protected entitlement, employees who have experienced a recent loss may benefit from additional support.',
-          steps: [
-            'Send a letter of condolence / compassionate outreach from their manager',
-            'Inform employee of EAP services and mental health resources',
-            'Ensure all bereavement leave entitlements have been correctly applied',
-            'Schedule an informal wellness check-in at return to duty'
-          ]
-        });
-      }
-    }
-
-    if (fat >= 3) {
-      recs.push({
-        cls: 'warning', icon: '😴',
-        title: '⚠️ Fatigue Risk Assessment — Immediate Action Required (FAT×' + fat + ')',
-        desc: '<strong>' + fat + ' fatigue events</strong> in aviation crew is a serious safety concern with regulatory implications under Transport Canada\'s FRMS requirements.',
-        steps: [
-          '🚨 Flag for immediate FRMS (Fatigue Risk Management System) review',
-          'Refer to Occupational Health for fatigue and fitness-for-duty assessment',
-          'Audit recent duty/rest records — verify compliance with CARs & CBA rest minimums',
-          'Consider temporary scheduling revision pending health clearance',
-          '⛔ Do NOT roster on long-haul or safety-critical pairings until assessment complete',
-          'Document in crew safety management database (SMS)'
-        ]
-      });
-    } else if (fat > 0) {
-      recs.push({
-        cls: 'caution', icon: '😴',
-        title: 'Fatigue Noted — Review Duty Patterns (FAT×' + fat + ')',
-        desc: '<strong>' + fat + ' fatigue event' + (fat > 1 ? 's' : '') + '</strong>. Review scheduling for contributing factors before this becomes a safety risk.',
-        steps: [
-          'Review recent duty periods for rest requirement compliance',
-          'Monitor for recurrence — escalate to FRMS review if pattern develops'
-        ]
-      });
-    }
-
-    if (sck >= 15) {
-      recs.push({
-        cls: 'info', icon: '🏥',
-        title: 'Occupational Health Referral — Chronic Sick Pattern (SCK×' + sck + ')',
-        desc: '<strong>' + sck + ' sick events</strong> may indicate an underlying medical condition not being appropriately managed. An occupational health pathway supports both the employee and the organization.',
-        steps: [
-          'Initiate Occupational Health referral (voluntary preferred; mandatory if policy triggers)',
-          'Conduct Return-to-Work (RTW) interviews to identify barriers to attendance',
-          'Explore reasonable workplace accommodations if a health condition is disclosed',
-          'Ensure STD/LTD entitlements are properly communicated and applied if applicable',
-          'Review with Benefits team — may qualify for disease management program'
-        ]
-      });
-    } else if (sck >= 7) {
-      recs.push({
-        cls: 'info', icon: '🏥',
-        title: 'Health Support — Elevated Sick Absences (SCK×' + sck + ')',
-        desc: '<strong>' + sck + ' sick events</strong>. Proactive engagement can identify health barriers early and prevent long-term absence.',
-        steps: [
-          'Conduct informal wellness check-in conversation',
-          'Remind employee of EAP, benefits coverage, and Occupational Health services',
-          'Monitor trend — refer to Occupational Health if pattern continues next quarter'
-        ]
-      });
-    }
-
-    if (uav >= 3) {
-      recs.push({
-        cls: 'caution', icon: '🔒',
-        title: 'Availability Review — Repeated Unavailable Events (UAV×' + uav + ')',
-        desc: '<strong>' + uav + ' Unavailable-to-Work events</strong>. The UAV code covers multiple scenarios — accurate classification is critical before any action.',
-        steps: [
-          'Review event logs/notes to classify cause: medical, personal, or operational',
-          'Engage employee in an informal discussion to understand underlying drivers',
-          'If personal/scheduling: explore accommodation or scheduling options',
-          'If behavioural without justification: document and begin formal attendance monitoring'
-        ]
-      });
-    }
-
-    if (e.emp_num < 10000 && e.risk_score >= 80) {
-      recs.push({
-        cls: 'info', icon: '⭐',
-        title: 'Seniority Risk Flag — Senior Crew Member (Emp #' + e.emp_num + ')',
-        desc: 'This is a <strong>very senior employee</strong> with significant institutional knowledge and likely strong union protection. All HR actions carry elevated legal, operational, and morale risk.',
-        steps: [
-          'Engage Labour Relations Lead BEFORE any formal disciplinary step',
-          "Ensure employee's right to union representation is clearly communicated",
-          'Document all interactions — senior employees frequently challenge decisions',
-          'Consider retention-focused interventions, EAP, and wellness support first',
-          'Assess operational impact of potential separation before proceeding'
-        ]
-      });
-    }
-
-    if (e.bradford >= 900) {
-      recs.push({
-        cls: 'urgent', icon: '📊',
-        title: 'Bradford Factor — Formal Investigation Threshold Exceeded (' + e.bradford.toLocaleString() + ')',
-        desc: 'Bradford score of <strong>' + e.bradford.toLocaleString() + '</strong> exceeds the 900-point formal action threshold commonly used in airline attendance policies. This score alone may justify a formal HR process.',
-        steps: [
-          'Convene a formal Bradford review under the Attendance Management Policy',
-          'Present Bradford analysis with full event breakdown at any disciplinary hearing',
-          'Offer employee the opportunity to present mitigating circumstances',
-          'Bereavement and medical events should be documented as context — not removed from the calculation without policy basis'
-        ]
-      });
-    } else if (e.bradford >= 200) {
-      recs.push({
-        cls: 'caution', icon: '📊',
-        title: 'Bradford Factor — Caution Zone (' + e.bradford.toLocaleString() + ')',
-        desc: 'Bradford score of <strong>' + e.bradford.toLocaleString() + '</strong> is approaching the formal action threshold (900). Intervention now can prevent escalation.',
-        steps: [
-          'Discuss Bradford score during next supervisory check-in',
-          'Set an attendance improvement target for the next 90 days',
-          'Schedule a Bradford review at end of quarter'
-        ]
-      });
-    }
-
-    if (recs.length === 0) {
-      recs.push({
-        cls: 'green', icon: '✅',
-        title: 'No Immediate HR Action Required',
-        desc: "This employee's absence profile does not currently trigger any formal HR action thresholds. Continue routine monitoring.",
-        steps: ['Review at next scheduled performance cycle']
-      });
-    }
-
-    return recs;
-  }
-
-  // Wire up: clicking a crew member (profile card or watchlist row) opens the dashboard-style modal
+  // Wire up: clicking a crew member (profile card or watchlist row) opens their supervisor's team modal
   document.querySelectorAll('.emp-open').forEach(el => {
     el.addEventListener('click', () => openEmployeeModal(parseInt(el.dataset.emp, 10) || DEMO_EMPLOYEE.emp));
   });
