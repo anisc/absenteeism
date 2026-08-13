@@ -258,6 +258,11 @@
   .watch-row .wn { font-weight: 800; color: #e2e8f0; min-width: 58px; }
   .watch-row .wb { color: var(--muted); min-width: 74px; }
   .watch-row .wv { margin-left: auto; font-weight: 800; }
+  .watch-row .wchev { color: #475569; font-size: 15px; transition: transform .2s, color .2s; }
+  .watch-row.emp-open { cursor: pointer; border-radius: 6px; padding-left: 6px; padding-right: 6px; margin: 0 -6px; transition: background .15s; }
+  .watch-row.emp-open:hover { background: rgba(59,130,246,0.08); }
+  .watch-row.emp-open:hover .wn { color: #93c5fd; }
+  .watch-row.emp-open:hover .wchev { color: #93c5fd; transform: translateX(2px); }
 
   .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 1.8s ease infinite; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -599,11 +604,11 @@
           </div>
           <div class="card">
             <h4>🚨 Top-Risk Crew Watchlist</h4>
-            <div class="watch-row"><span class="wn">#4464</span><span class="wb">YVR · FA</span><span class="wv" style="color:#f87171;">Bradford 70,560</span></div>
-            <div class="watch-row"><span class="wn">#747</span><span class="wb">YEG · FA</span><span class="wv" style="color:#f87171;">Bradford 60,112</span></div>
-            <div class="watch-row"><span class="wn">#2129</span><span class="wb">YYZ · FA</span><span class="wv" style="color:#f87171;">Bradford 37,500</span></div>
-            <div class="watch-row"><span class="wn">#5484</span><span class="wb">YWG · FA</span><span class="wv" style="color:#f87171;">Bradford 26,979</span></div>
-            <div style="font-size:10.5px;color:#475569;margin-top:10px;">Top crew already qualify for the Reactive Attendance Program (12-Month Rule).</div>
+            <div class="watch-row emp-open" data-emp="4464" title="Open profile"><span class="wn">#4464</span><span class="wb">YVR · FA</span><span class="wv" style="color:#f87171;">Bradford 70,560</span><span class="wchev">›</span></div>
+            <div class="watch-row emp-open" data-emp="747" title="Open profile"><span class="wn">#747</span><span class="wb">YEG · FA</span><span class="wv" style="color:#f87171;">Bradford 60,112</span><span class="wchev">›</span></div>
+            <div class="watch-row emp-open" data-emp="2129" title="Open profile"><span class="wn">#2129</span><span class="wb">YYZ · FA</span><span class="wv" style="color:#f87171;">Bradford 37,500</span><span class="wchev">›</span></div>
+            <div class="watch-row emp-open" data-emp="5484" title="Open profile"><span class="wn">#5484</span><span class="wb">YWG · FA</span><span class="wv" style="color:#f87171;">Bradford 26,979</span><span class="wchev">›</span></div>
+            <div style="font-size:10.5px;color:#475569;margin-top:10px;">Top crew already qualify for the Reactive Attendance Program (12-Month Rule). Click any crew member for their full profile.</div>
           </div>
         </div>
 
@@ -1264,24 +1269,90 @@
   })();
 
   // ── EMPLOYEE DETAIL MODAL (from dashboard.html) ──
-  const DEMO_EMPLOYEE = {
-    emp: 4464, emp_num: 36484, carrier: 'WS', base: 'YVR', position: 'FA',
-    ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 18261,
-    total_absences: 94,
-    codes: { SCK: 52, UAV: 35, LSK: 4, PDP: 3 },
-    monthly_events: {
-      LSK: [1,1,0,0,0,0,0,0,0,1,1,0],
-      PDP: [0,0,0,0,2,0,0,0,1,0,0,0],
-      SCK: [9,3,0,9,0,3,0,5,7,11,1,4],
-      UAV: [0,1,4,0,0,0,15,9,4,0,2,0]
+  const DEMO_EMPLOYEES = {
+    4464: {
+      emp: 4464, emp_num: 36484, carrier: 'WS', base: 'YVR', position: 'FA',
+      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 18261,
+      total_absences: 94,
+      codes: { SCK: 52, UAV: 35, LSK: 4, PDP: 3 },
+      monthly_events: {
+        LSK: [1,1,0,0,0,0,0,0,0,1,1,0],
+        PDP: [0,0,0,0,2,0,0,0,1,0,0,0],
+        SCK: [9,3,0,9,0,3,0,5,7,11,1,4],
+        UAV: [0,1,4,0,0,0,15,9,4,0,2,0]
+      },
+      monthly_sck_events: [9,3,0,9,0,3,0,5,7,11,1,4],
+      bradford: 70560, risk_score: 382.6, combined_score: 453.2,
+      nsp: 0, laa: 0, lsk: 4, bev: 0, sbl: 0,
+      attendance_program_qualified: true,
+      attendance_program_reason: 'Both',
+      attendance_program_type: 'Reactive'
     },
-    monthly_sck_events: [9,3,0,9,0,3,0,5,7,11,1,4],
-    bradford: 70560, risk_score: 382.6, combined_score: 453.2,
-    nsp: 0, laa: 0, lsk: 4, bev: 0, sbl: 0,
-    attendance_program_qualified: true,
-    attendance_program_reason: 'Both',
-    attendance_program_type: 'Reactive'
+    747: {
+      emp: 747, emp_num: 6690, carrier: 'WS', base: 'YEG', position: 'FA',
+      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 28805,
+      total_absences: 69,
+      codes: { SCK: 47, LSK: 17, UAV: 4, LAA: 1 },
+      monthly_events: {
+        LAA: [0,0,0,0,0,1,0,0,0,0,0,0],
+        LSK: [3,0,5,2,2,0,1,2,0,0,0,2],
+        SCK: [9,7,10,3,4,2,4,3,0,0,1,4],
+        UAV: [0,0,1,2,0,0,1,0,0,0,0,0]
+      },
+      monthly_sck_events: [9,7,10,3,4,2,4,3,0,0,1,4],
+      bradford: 60112, risk_score: 361.6, combined_score: 421.7,
+      nsp: 0, laa: 1, lsk: 17, bev: 0, sbl: 0,
+      attendance_program_qualified: true,
+      attendance_program_reason: 'Both',
+      attendance_program_type: 'Reactive'
+    },
+    2129: {
+      emp: 2129, emp_num: 16536, carrier: 'WS', base: 'YYZ', position: 'FA',
+      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 15771,
+      total_absences: 68,
+      codes: { SCK: 26, UAV: 8, LSK: 7, SBL: 7, BRU: 5, BEV: 5, PDU: 4, PDP: 3, LAA: 2, NSP: 1 },
+      monthly_events: {
+        BEV: [0,0,0,0,0,0,1,4,0,0,0,0],
+        BRU: [0,0,0,0,0,0,0,5,0,0,0,0],
+        LAA: [0,1,0,1,0,0,0,0,0,0,0,0],
+        LSK: [2,0,1,1,0,1,1,0,1,0,0,0],
+        NSP: [0,0,0,0,0,0,1,0,0,0,0,0],
+        PDP: [0,3,0,0,0,0,0,0,0,0,0,0],
+        PDU: [0,4,0,0,0,0,0,0,0,0,0,0],
+        SBL: [0,0,0,5,0,0,0,2,0,0,0,0],
+        SCK: [2,4,6,2,3,4,5,0,0,0,0,0],
+        UAV: [0,0,0,0,0,8,0,0,0,0,0,0]
+      },
+      monthly_sck_events: [2,4,6,2,3,4,5,0,0,0,0,0],
+      bradford: 37500, risk_score: 316.5, combined_score: 354.0,
+      nsp: 1, laa: 2, lsk: 7, bev: 5, sbl: 7,
+      attendance_program_qualified: true,
+      attendance_program_reason: 'Both',
+      attendance_program_type: 'Reactive'
+    },
+    5484: {
+      emp: 5484, emp_num: 40787, carrier: 'WS', base: 'YWG', position: 'FA',
+      ft_pt: 'Full-time Hourly', is_fulltime: true, sup_emp_num: 40936,
+      total_absences: 62,
+      codes: { SCK: 21, UAV: 15, SBL: 11, LSK: 11, NSP: 2, FAT: 1, COS: 1 },
+      monthly_events: {
+        COS: [0,1,0,0,0,0,0,0,0,0,0,0],
+        FAT: [0,0,0,0,1,0,0,0,0,0,0,0],
+        LSK: [1,0,0,2,4,1,1,2,0,0,0,0],
+        NSP: [0,0,0,0,0,0,1,0,0,0,0,1],
+        SBL: [0,0,0,4,0,0,0,6,1,0,0,0],
+        SCK: [3,0,1,0,5,5,3,4,0,0,0,0],
+        UAV: [0,0,0,0,1,4,5,1,4,0,0,0]
+      },
+      monthly_sck_events: [3,0,1,0,5,5,3,4,0,0,0,0],
+      bradford: 26979, risk_score: 320.8, combined_score: 347.8,
+      nsp: 2, laa: 0, lsk: 11, bev: 0, sbl: 11,
+      attendance_program_qualified: true,
+      attendance_program_reason: 'Both',
+      attendance_program_type: 'Reactive'
+    }
   };
+  const DEMO_EMPLOYEE = DEMO_EMPLOYEES[4464];
 
   const CODE_COLORS_MODAL = {
     SCK: '#3b82f6', NSP: '#ef4444', LAA: '#f97316', LSK: '#f59e0b',
@@ -1315,7 +1386,7 @@
   }
 
   function openEmployeeModal(empId) {
-    const e = DEMO_EMPLOYEE.emp === empId ? DEMO_EMPLOYEE : null;
+    const e = DEMO_EMPLOYEES[empId] || null;
     if (!e) return;
     currentModalEmployee = e;
 
@@ -1850,9 +1921,9 @@
     return recs;
   }
 
-  // Wire up: clicking the employee profile opens the dashboard-style modal
+  // Wire up: clicking a crew member (profile card or watchlist row) opens the dashboard-style modal
   document.querySelectorAll('.emp-open').forEach(el => {
-    el.addEventListener('click', () => openEmployeeModal(DEMO_EMPLOYEE.emp));
+    el.addEventListener('click', () => openEmployeeModal(parseInt(el.dataset.emp, 10) || DEMO_EMPLOYEE.emp));
   });
 
   // animate initial pane bars
