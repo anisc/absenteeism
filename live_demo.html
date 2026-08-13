@@ -202,6 +202,11 @@
   }
   .ai-box .ab-label { font-size: 10px; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
   .ai-box .ab-q { flex: 1; font-size: 13.5px; font-weight: 600; color: #e2e8f0; }
+  .ai-box .ab-input {
+    flex: 1; font-family: inherit; font-size: 13.5px; font-weight: 600; color: #e2e8f0;
+    background: transparent; border: none; outline: none; min-width: 0; padding: 4px 0;
+  }
+  .ai-box .ab-input::placeholder { color: #64748b; font-weight: 500; }
   .ai-btn {
     cursor: pointer; font-family: inherit; font-weight: 700; font-size: 12.5px;
     padding: 9px 20px; border-radius: 10px; border: none;
@@ -512,11 +517,11 @@
       <div class="pane" id="exec-ai">
         <div class="eyebrow">AI Agent</div>
         <div class="pane-title">Ask the agent: "Why here?"</div>
-        <div class="pane-sub">Natural-language answers backed by data and policy — pre-loaded for the demo.</div>
+        <div class="pane-sub">Type any question — the agent answers with real FY2025 data and policy.</div>
 
         <div class="ai-box">
           <span class="ab-label">Ask AI</span>
-          <span class="ab-q">Why is absenteeism so high in YYC?</span>
+          <input class="ab-input" id="execQ" type="text" value="Why is absenteeism so high in YYC?" spellcheck="false">
           <button class="ai-btn" id="execAskBtn">Ask</button>
         </div>
 
@@ -596,11 +601,11 @@
       <div class="pane" id="vp-ai">
         <div class="eyebrow">AI Agent</div>
         <div class="pane-title">VP-level prioritization</div>
-        <div class="pane-sub">Same agent, asked the question a VP actually asks.</div>
+        <div class="pane-sub">Type any question — the agent ranks by cost × risk × readiness.</div>
 
         <div class="ai-box">
           <span class="ab-label">Ask AI</span>
-          <span class="ab-q">Which base should I focus on first?</span>
+          <input class="ab-input" id="vpQ" type="text" value="Which base should I focus on first?" spellcheck="false">
           <button class="ai-btn" id="vpAskBtn">Ask</button>
         </div>
 
@@ -946,11 +951,11 @@
   }).join('');
 
   // ── TYPING EFFECT ─────────────────────
-  function typeLines(el, lines, speed = 18) {
+  function typeLines(el, lines, speed = 18, done) {
     el.classList.add('typing');
     let li = 0, ci = 0;
     function tick() {
-      if (li >= lines.length) { el.classList.remove('typing'); return; }
+      if (li >= lines.length) { el.classList.remove('typing'); if (done) done(); return; }
       const line = lines[li];
       if (ci <= line.length) {
         el.textContent = lines.slice(0, li).join('\n') + (li > 0 ? '\n' : '') + line.slice(0, ci);
@@ -960,42 +965,271 @@
     tick();
   }
 
-  // ── EXEC AI ───────────────────────────
-  document.getElementById('execAskBtn').addEventListener('click', function() {
-    if (this.disabled) return; this.disabled = true;
-    const box = document.getElementById('execAnswer');
-    box.classList.add('show');
-    typeLines(document.getElementById('execResponse'), [
-      'YYC drives 42% of fleet absence events — roughly $13M of the $31.7M annual cost.',
-      '',
-      'Why here:',
-      '• Sick time (SCK) is 69% of all events, and YYC runs above the fleet norm.',
-      '• Seasonality: December +51% vs November (flu + holiday travel).',
-      '• 19 critical-risk crew in YYC (of 88 fleet) — 4 already past review threshold.',
-      '',
-      'Recommendation: proactive outreach to YYC critical-risk crew before the next peak, and a scheduling review for December coverage.',
-      '',
-      'Ready to draft the manager brief for YYC.'
-    ]);
-  });
+  // ── AI ANSWER ENGINE (data-grounded, offline) ──
+  const KB = {
+    total: 100708,
+    cost: '$31.7M',
+    critical: 88,
+    programs: { total: 4684, proactive: 1067, reactive: 3617 },
+    bases: {
+      YYC: { events: 42543, share: 42, cost: '$13.3M', critical: 19 },
+      YYZ: { events: 25901, share: 26, cost: '$8.2M', critical: 45 },
+      YVR: { events: 15127, share: 15, cost: '$4.8M', critical: 11 },
+      YEG: { events: 6974, share: 7, cost: '$2.2M', critical: 6 },
+      YWG: { events: 5594, share: 6, cost: '$1.8M', critical: 5 },
+      YUL: { events: 3672, share: 4, cost: '$1.2M', critical: 2 },
+      YHZ: { events: 889, share: 1, cost: '$0.3M', critical: 0 }
+    },
+    codes: {
+      SCK: { label: 'Sick (SCK)', count: 69712, share: 69, sev: 'top' },
+      PDP: { label: 'Personal Paid (PDP)', count: 10713, share: 11, sev: 'normal' },
+      SBL: { label: 'Sick Before Leave (SBL)', count: 3478, share: 3, sev: 'flag' },
+      UAV: { label: 'Unavailable (UAV)', count: 3446, share: 3, sev: 'monitor' },
+      BEV: { label: 'Bereavement (BEV)', count: 3429, share: 3, sev: 'protected' },
+      FAT: { label: 'Fatigue (FAT)', count: 2447, share: 2, sev: 'safety' },
+      PDU: { label: 'Personal Unpaid (PDU)', count: 2065, share: 2, sev: 'monitor' },
+      LSK: { label: 'Late Sick Call (LSK)', count: 1862, share: 2, sev: 'warning' },
+      LAA: { label: 'Late Arrival (LAA)', count: 1088, share: 1, sev: 'warning' },
+      NSP: { label: 'No-Show (NSP)', count: 907, share: 1, sev: 'critical' },
+      BRU: { label: 'Bereavement Unpaid (BRU)', count: 598, share: 1, sev: 'protected' },
+      COS: { label: 'Not Meeting Standards (COS)', count: 570, share: 1, sev: 'critical' },
+      UFT: { label: 'Other (UFT)', count: 393, share: 0, sev: 'normal' }
+    },
+    months: [
+      { name: 'Jan', events: 7608 }, { name: 'Feb', events: 8003 },
+      { name: 'Mar', events: 8238 }, { name: 'Apr', events: 7252 },
+      { name: 'May', events: 7278 }, { name: 'Jun', events: 8141 },
+      { name: 'Jul', events: 9546 }, { name: 'Aug', events: 9981 },
+      { name: 'Sep', events: 7956 }, { name: 'Oct', events: 7561 },
+      { name: 'Nov', events: 7625 }, { name: 'Dec', events: 11519 }
+    ]
+  };
 
-  // ── VP AI ─────────────────────────────
-  document.getElementById('vpAskBtn').addEventListener('click', function() {
-    if (this.disabled) return; this.disabled = true;
-    const box = document.getElementById('vpAnswer');
+  const BASE_ALIAS = {
+    yyc: 'YYC', calgary: 'YYC', yyz: 'YYZ', toronto: 'YYZ',
+    yvr: 'YVR', vancouver: 'YVR', yeg: 'YEG', edmonton: 'YEG',
+    ywg: 'YWG', winnipeg: 'YWG', yul: 'YUL', montreal: 'YUL',
+    yhz: 'YHZ', halifax: 'YHZ'
+  };
+  const MONTH_ALIAS = [
+    { i: 0, keys: ['january', 'jan'] }, { i: 1, keys: ['february', 'feb'] },
+    { i: 2, keys: ['march', 'mar', 'spring'] }, { i: 3, keys: ['april', 'apr', 'easter'] },
+    { i: 4, keys: ['may'] }, { i: 5, keys: ['june', 'jun'] },
+    { i: 6, keys: ['july', 'jul', 'summer', 'stampede'] }, { i: 7, keys: ['august', 'aug'] },
+    { i: 8, keys: ['september', 'sep'] }, { i: 9, keys: ['october', 'oct', 'thanksgiving'] },
+    { i: 10, keys: ['november', 'nov'] }, { i: 11, keys: ['december', 'dec', 'christmas', 'holiday'] }
+  ];
+  const CODE_ALIAS = [
+    { code: 'SCK', keys: ['sck', 'sick', 'illness', 'flu'] },
+    { code: 'NSP', keys: ['nsp', 'no show', 'no-show'] },
+    { code: 'LAA', keys: ['laa', 'late arrival', 'late arrival'] },
+    { code: 'LSK', keys: ['lsk', 'late sick'] },
+    { code: 'SBL', keys: ['sbl', 'sick before leave', 'vacation padding'] },
+    { code: 'UAV', keys: ['uav', 'unavailable'] },
+    { code: 'FAT', keys: ['fat', 'fatigue', 'tired'] },
+    { code: 'BEV', keys: ['bev', 'bereavement', 'grief'] },
+    { code: 'PDP', keys: ['pdp', 'personal paid'] },
+    { code: 'COS', keys: ['cos', 'not meeting standards'] },
+    { code: 'PDU', keys: ['pdu', 'personal unpaid'] }
+  ];
+
+  function norm(s) { return s.toLowerCase().replace(/[^a-z0-9#\s\-]/g, ' ').replace(/\s+/g, ' ').trim(); }
+
+  function kbBases(s) {
+    const out = [];
+    for (const k in BASE_ALIAS) {
+      if (s.includes(k) && !out.includes(BASE_ALIAS[k])) out.push(BASE_ALIAS[k]);
+    }
+    return out;
+  }
+  function kbCodes(s) {
+    const out = [];
+    for (const a of CODE_ALIAS) {
+      if (a.keys.some(k => new RegExp('\\b' + k + '\\b').test(s)) && !out.includes(a.code)) out.push(a.code);
+    }
+    return out;
+  }
+  function kbMonths(s) {
+    const out = [];
+    for (const m of MONTH_ALIAS) {
+      if (m.keys.some(k => s.includes(k)) && !out.includes(m.i)) out.push(m.i);
+    }
+    return out;
+  }
+
+  function answerDemoQuestion(q) {
+    const raw = (q || '').trim();
+    if (!raw) {
+      return [
+        'Type a question about the FY2025 crew data — e.g. "Why is absenteeism high in YYC?", "Which base first?", or "Cost by base?".',
+        '',
+        'The agent answers from the live absence dataset.'
+      ];
+    }
+    const s = norm(raw);
+    const bases = kbBases(s);
+    const codes = kbCodes(s);
+    const months = kbMonths(s);
+    const L = [];
+    let matched = false;
+
+    const wantsWhy = /why|reason|explain|driver|cause|because/.test(s);
+    const wantsCost = /cost|dollar|money|\$|budget|spend|financial/.test(s);
+    const wantsRisk = /risk|critical|danger|severe/.test(s);
+    const wantsRank = /rank|focus|compare|versus|vs\b|most|biggest|top|worst|largest|priority|prioritize/.test(s);
+    const wantsAction = /recommend|should|action|what to do|next|first|outreach/.test(s) || wantsWhy;
+    const wantsEmp = /#4464|4464|36484|employee|highest.risk|worst crew/.test(s);
+
+    // HEADLINE
+    if (bases.length) {
+      bases.forEach(b => {
+        const d = KB.bases[b];
+        L.push(`${b} drives ${d.share}% of fleet absence events — ${d.events.toLocaleString()} of ~${KB.total.toLocaleString()} (${d.cost} of the ${KB.cost} annual cost).`);
+      });
+      matched = true;
+    } else if (codes.length) {
+      codes.forEach(c => {
+        const d = KB.codes[c];
+        L.push(`${d.label}: ${d.count.toLocaleString()} events — ${d.share}% of the fleet total.`);
+      });
+      matched = true;
+    } else if (months.length) {
+      months.forEach(mi => {
+        const d = KB.months[mi];
+        const prev = mi > 0 ? KB.months[mi - 1].events : null;
+        L.push(`${d.name} had ${d.events.toLocaleString()} absence events${prev !== null ? ' vs ' + prev.toLocaleString() + ' the prior month' : ''} — fleet-wide.`);
+      });
+      matched = true;
+    }
+
+    // WHY
+    if (wantsWhy) {
+      L.push('', 'Why here:');
+      if (bases.length) {
+        bases.forEach(b => {
+          const d = KB.bases[b];
+          L.push(`• ${b} holds ${d.critical} critical-risk crew (of ${KB.critical} fleet) and runs ${d.share >= 15 ? 'above' : 'near'} the fleet norm.`);
+        });
+      }
+      if (codes.length) {
+        codes.forEach(c => {
+          const d = KB.codes[c];
+          const sev = d.sev === 'critical' ? ' — the most severe category'
+            : d.sev === 'top' ? ' — the dominant fleet driver'
+            : d.sev === 'flag' ? ' — reasonable-doubt flag (vacation padding)'
+            : d.sev === 'safety' ? ' — a Transport Canada FRMS safety concern'
+            : d.sev === 'protected' ? ' — a protected entitlement' : '';
+          L.push(`• ${d.label} accounts for ${d.share}% of events${sev}.`);
+        });
+      } else if (!bases.length) {
+        L.push('• Sick time (SCK) is 69% of all events — the dominant driver fleet-wide.');
+      }
+      if (months.length) {
+        months.forEach(mi => {
+          if (mi === 11) L.push('• December is the seasonal peak — +51% vs November (flu + holiday travel coverage gaps).');
+          else if (mi === 6 || mi === 7) L.push('• July–August is the summer peak — high leave load plus operational demand.');
+          else L.push(`• ${KB.months[mi].name} runs ${KB.months[mi].events >= 9000 ? 'above' : 'below'} the ~8.4K monthly average.`);
+        });
+      } else {
+        L.push('• Seasonality: December +51% vs November, with a July–August summer peak.');
+      }
+      matched = true;
+    }
+
+    // RANKING
+    if (wantsRank) {
+      L.push('', 'By the numbers (cost × risk):');
+      L.push('1. YYC — 42% of cost ($13.3M), 19 critical-risk crew.');
+      L.push('2. YYZ — 26% of cost ($8.2M), 45 critical-risk crew — largest risk count.');
+      L.push('3. YVR — 15% of cost ($4.8M), 11 critical-risk crew — home of #4464, fleet #1 risk.');
+      matched = true;
+    }
+
+    // ACTION
+    if (wantsAction) {
+      L.push('', 'Recommendation:');
+      if (bases.length) {
+        const top = bases.slice().sort((a, b) => KB.bases[b].critical - KB.bases[a].critical)[0];
+        L.push(`• Brief ${top} managers on their ${KB.bases[top].critical} critical-risk crew before the next pairing cycle — support first, no discipline.`);
+        if (codes.includes('SCK') || months.includes(11)) L.push('• Review scheduling & December coverage against the sick-time spike.');
+        if (codes.includes('NSP')) L.push('• No-shows require immediate formal follow-up (Step 2+ per attendance policy).');
+      } else if (codes.includes('NSP')) {
+        L.push('• No-shows are the most severe code — immediate formal follow-up required.');
+      } else if (codes.includes('FAT')) {
+        L.push('• Flag for FRMS review; do not roster long-haul until cleared.');
+      } else if (codes.includes('SBL')) {
+        L.push('• SBL triggers reasonable doubt — mandate medical certificates for absences attached to leave.');
+      } else if (codes.includes('BEV')) {
+        L.push('• Bereavement is protected — lead with compassionate EAP support, not discipline.');
+      } else if (codes.length) {
+        L.push('• Target support at the pattern — proactive outreach before the next peak.');
+      } else {
+        L.push('• Start with the 88 critical-risk crew — brief managers by base, then proactive outreach to the top 20.');
+      }
+      matched = true;
+    }
+
+    // COST
+    if (wantsCost) {
+      L.push('', 'Financial view:');
+      L.push('• ~$31.7M annual — $14.6M replacement/overtime (46%), $10.8M pay continuation (34%).');
+      L.push('• ~$11M (≈35%) estimated avoidable with proactive support.');
+      if (!bases.length) L.push('• Two-thirds of the exposure sits in YYC + YYZ.');
+      matched = true;
+    }
+
+    // RISK
+    if (wantsRisk) {
+      L.push('', 'Risk exposure:');
+      L.push(`• ${KB.critical} critical-risk crew (score ≥150) — YYZ 45 · YYC 19 · YVR 11 · YEG 6 · YWG 5 · YUL 2.`);
+      L.push('• 907 no-show (NSP) events — the highest-severity code.');
+      if (!bases.length) L.push('• Top individual: #4464 (YVR · FA · Bradford 70,560 · risk 382.6).');
+      matched = true;
+    }
+
+    // EMPLOYEE
+    if (wantsEmp) {
+      L.push('', 'Employee #4464 (YVR · FA · Bradford 70,560):');
+      L.push('• Fleet #1 risk (382.6) — 94 absences: 52 SCK, 35 UAV, 4 LSK, 3 PDP.');
+      L.push('• Sick time in 10 of 12 months; UAV spikes in Aug–Sep (fatigue signal).');
+      L.push('• Qualified for the Reactive Attendance Program (12-Month Rule).');
+      L.push('• Next: Occupational Health assessment → scheduling review → program support. No discipline step.');
+      matched = true;
+    }
+
+    // SUMMARY / fallback
+    if (!matched) {
+      L.push('', 'Fleet snapshot (FY2025):');
+      L.push('• 7,243 crew · 100,708 absence events · ~$31.7M annual cost.');
+      L.push('• SCK (sick) 69% of events · December +51% MoM peak · 88 critical-risk crew.');
+      L.push('• Events by base: YYC 42% · YYZ 26% · YVR 15% · FA crews 64% of volume.');
+      L.push('', 'Try: "why is sick time high in December?", "which base first?", "cost by base?", or "who is highest risk?".');
+    }
+
+    return L;
+  }
+
+  function runAsk(qId, respId, boxId, btnId) {
+    const btn = document.getElementById(btnId);
+    if (btn.disabled) return;
+    const q = document.getElementById(qId);
+    const box = document.getElementById(boxId);
     box.classList.add('show');
-    typeLines(document.getElementById('vpResponse'), [
-      'Ranked by cost × risk × readiness:',
-      '',
-      '1. YYC — 42% of cost ($13.3M), 19 critical-risk crew. Start here.',
-      '2. YYZ — 26% of cost ($8.2M), 45 critical-risk crew. Largest risk count.',
-      '3. YVR — 15% of cost ($4.8M). Top-risk individual (#4464, Bradford 70,560).',
-      '',
-      'First action: brief YYC managers on their 19 critical-risk crew this week; run proactive outreach to the top 20 across all bases.',
-      '',
-      'I can generate the manager brief for any base.'
-    ]);
-  });
+    btn.disabled = true;
+    typeLines(document.getElementById(respId), answerDemoQuestion(q.value), 15, () => { btn.disabled = false; });
+  }
+
+  function setupAsk(qId, respId, boxId, btnId) {
+    const btn = document.getElementById(btnId);
+    btn.addEventListener('click', () => runAsk(qId, respId, boxId, btnId));
+    document.getElementById(qId).addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') runAsk(qId, respId, boxId, btnId);
+    });
+  }
+
+  setupAsk('execQ', 'execResponse', 'execAnswer', 'execAskBtn');
+  setupAsk('vpQ', 'vpResponse', 'vpAnswer', 'vpAskBtn');
+
 
   // ── EMPLOYEE AI (pre-typed on panel 9) ──
   (function() {
