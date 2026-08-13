@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Demo — Crew Absenteeism AI · Executive · VP · Employee</title>
+<title>Live Demo — Crew Absenteeism AI · Executive · VP · Supervisor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -375,7 +375,7 @@
   <nav class="tabs" id="tabs">
     <button class="tab active" data-view="exec">🧑‍💼 Executive</button>
     <button class="tab" data-view="vp">👔 VP</button>
-    <button class="tab" data-view="emp">👤 Employee</button>
+    <button class="tab" data-view="emp">👤 Supervisor</button>
   </nav>
 
   <div class="top-right">
@@ -648,10 +648,10 @@
   <!-- ═══════════════ EMPLOYEE ═══════════════ -->
   <section class="view" id="view-emp">
     <aside class="rail">
-      <div class="rail-title">Employee · click to drill in</div>
+      <div class="rail-title">Supervisor · click to drill in</div>
       <button class="hot" data-panel="emp-profile">
         <span class="hi">👤</span>
-        <span>Employee Profile<small class="hd">Single view of a crew member</small></span>
+        <span>Supervisor Profile<small class="hd">Single view of a supervisor</small></span>
         <span class="stepno">7</span>
       </button>
       <button class="hot" data-panel="emp-trends">
@@ -669,14 +669,14 @@
 
     <div class="panel">
       <div class="pane active" id="emp-profile">
-        <div class="eyebrow">Employee Profile</div>
+        <div class="eyebrow">Supervisor Profile</div>
         <div class="pane-title">Highest-risk crew member — fleet-wide</div>
         <div class="pane-sub">Auto-assembled profile · every field from source data.</div>
 
         <div class="card emp-open" style="display:flex;align-items:center;gap:18px;padding:20px 22px;">
           <div style="width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,#ef4444,#f97316);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👤</div>
           <div style="flex:1;">
-            <div style="font-size:17px;font-weight:800;">Employee #4464</div>
+            <div style="font-size:17px;font-weight:800;">Supervisor #4464</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px;">YVR · Flight Attendant · Full-time</div>
           </div>
           <span class="pill pill-red">⚠ Critical Risk</span>
@@ -711,7 +711,7 @@
           </div>
         </div>
 
-        <div class="note">"Every employee has one profile — current risk, Bradford, patterns, program status. This is the same record HR and the manager see."</div>
+        <div class="note">"Every supervisor has one profile — current risk, Bradford, patterns, program status. This is the same record HR and the manager see."</div>
       </div>
 
       <div class="pane" id="emp-trends">
@@ -783,7 +783,7 @@
   <div class="modal-panel">
     <div class="modal-header">
       <div>
-        <div style="font-size:16px;font-weight:800;letter-spacing:-0.3px;" id="modal-emp-id">Employee</div>
+        <div style="font-size:16px;font-weight:800;letter-spacing:-0.3px;" id="modal-emp-id">Supervisor</div>
         <div style="font-size:12px;color:#64748b;margin-top:3px;" id="modal-subtitle"></div>
       </div>
       <button class="modal-close" onclick="closeEmployeeModal()">✕</button>
@@ -857,7 +857,7 @@
         </div>
         <div style="display:flex;gap:12px;margin-bottom:12px;background:rgba(255,255,255,0.03);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
           <div>
-            <label style="display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Employee Birthday Month</label>
+            <label style="display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Supervisor Birthday Month</label>
             <select id="modal-bday-month" class="filter-select" style="width:140px;" onchange="updateModalPatternChart()">
               <option value="">-- Not Analyzed --</option>
               <option value="0">January</option>
@@ -895,7 +895,7 @@
       <div>
         <div class="modal-section-title">🏢 HR Action Recommendations</div>
         <div style="font-size:11px;color:#475569;margin-bottom:12px;line-height:1.6;">
-          Recommendations are <strong>auto-generated</strong> based on this employee's absence profile.
+          Recommendations are <strong>auto-generated</strong> based on this supervisor's absence profile.
           All actions must be reviewed by a qualified HR / Labour Relations professional before implementation.
           <span style="color:#f59e0b;">⚠️ POC Only.</span>
         </div>
@@ -1209,13 +1209,13 @@
       L.push('', 'Risk exposure:');
       L.push(`• ${KB.critical} critical-risk crew (score ≥150) — YYZ 45 · YYC 19 · YVR 11 · YEG 6 · YWG 5 · YUL 2.`);
       L.push('• 907 no-show (NSP) events — the highest-severity code.');
-      if (!bases.length) L.push('• Top individual: #4464 (YVR · FA · Bradford 70,560 · risk 382.6).');
+      if (!bases.length) L.push('• Top supervisor: #4464 (YVR · FA · Bradford 70,560 · risk 382.6).');
       matched = true;
     }
 
     // EMPLOYEE
     if (wantsEmp) {
-      L.push('', 'Employee #4464 (YVR · FA · Bradford 70,560):');
+      L.push('', 'Supervisor #4464 (YVR · FA · Bradford 70,560):');
       L.push('• Fleet #1 risk (382.6) — 94 absences: 52 SCK, 35 UAV, 4 LSK, 3 PDP.');
       L.push('• Sick time in 10 of 12 months; UAV spikes in Aug–Sep (fatigue signal).');
       L.push('• Qualified for the Reactive Attendance Program (12-Month Rule).');
@@ -1408,7 +1408,7 @@
       RC: 'Relief Captain', FL: 'Flight Attendant Leader'
     };
 
-    document.getElementById('modal-emp-id').textContent = 'Employee #' + e.emp_num;
+    document.getElementById('modal-emp-id').textContent = 'Supervisor #' + e.emp_num;
     document.getElementById('modal-subtitle').innerHTML =
       (posFullLabel[e.position] || e.position) + ' &nbsp;·&nbsp; ' + e.base +
       ' &nbsp;·&nbsp; ' + e.carrier +
